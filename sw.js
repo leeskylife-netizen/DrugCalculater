@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v6'; // อัปเกรดเวอร์ชันแคช PWA เพื่อบังคับฟอนต์ Sarabun ครอบคลุมปุ่มและอินพุตทั้งหมด
+const CACHE_NAME = 'ncd-app-cache-v10'; // อัปเกรดเวอร์ชันแคช PWA สำหรับดีไซน์พรีเมียมสไตล์ iOS เวอร์ชันปรับปรุงละเอียด (v10)
 const ASSETS = [
   './',
   './index.html',

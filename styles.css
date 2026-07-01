@@ -1,175 +1,164 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
 
 :root {
-    /* Base Color Palette Tokens */
-    --neon-teal: #0f766e;
-    --neon-teal-glow: #14b8a6;
-    --neon-blue: #0284c7;
-    --neon-blue-glow: #38bdf8;
-    --neon-indigo: #4f46e5;
-    --neon-purple: #7c3aed;
-    --neon-pink: #db2777;
-    --neon-orange: #ea580c;
+    /* iOS System Colors (Light Mode) */
+    --primary: #007aff; /* iOS System Blue */
+    --primary-hover: #0056b3;
+    --primary-light: #e5f1ff;
+    --system-teal: #30b0c0;
+    --system-teal-light: #eaf7f9;
     
-    /* LIGHT MODE (Default) */
-    --bg-app: #f8fafc;
-    --bg-app-gradient: radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.05) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
-    --bg-card: rgba(255, 255, 255, 0.85);
-    --border-color: rgba(15, 118, 110, 0.15);
+    --bg-app: #f2f2f7; /* iOS System Grouped Background */
+    --bg-card: #ffffff; /* iOS Secondary System Grouped Background */
+    --border: #e5e5ea; /* iOS Separator (finer than d1d1d6) */
     
-    --text-title: #0f172a;
-    --text-main: #334155;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
+    --text-title: #000000;
+    --text-main: #1c1c1e;
+    --text-muted: #8e8e93; /* iOS System Gray */
+    --text-dim: #c7c7cc;
     
-    --bg-input: #ffffff;
-    --border-input: #e2e8f0;
-    --bg-black-trans: rgba(0, 0, 0, 0.03);
+    /* iOS Status Colors */
+    --success: #34c759; /* iOS Green */
+    --success-bg: #eafaf1;
+    --warning: #ff9500; /* iOS Orange */
+    --warning-bg: #fff9f0;
+    --danger: #ff3b30; /* iOS Red */
+    --danger-bg: #ffebeb;
     
-    --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.03);
-    --shadow-neon: 0 0 15px rgba(20, 184, 166, 0.1), 0 0 30px rgba(56, 189, 248, 0.05);
-    --shadow-active: 0 0 20px rgba(20, 184, 166, 0.2), 0 0 40px rgba(20, 184, 166, 0.1);
+    --shadow-ios: 0 8px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --radius: 20px;
-    --radius-sm: 12px;
+    --transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); /* iOS-like smooth spring transition */
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 8px;
 }
 
-/* DARK MODE OVERRIDES */
+/* iOS System Colors (Dark Mode Overrides) */
 body.dark-theme {
-    /* Color Palette Adjustments for Dark mode */
-    --neon-teal: #00f2fe;
-    --neon-teal-glow: #00f2fe;
-    --neon-blue: #4facfe;
-    --neon-blue-glow: #4facfe;
-    --neon-indigo: #6366f1;
-    --neon-purple: #a855f7;
-    --neon-pink: #ec4899;
-    --neon-orange: #f97316;
-
-    --bg-app: #070a13;
-    --bg-app-gradient: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(20, 184, 166, 0.08) 0%, transparent 40%);
-    --bg-card: rgba(15, 23, 42, 0.65);
-    --border-color: rgba(20, 184, 166, 0.25);
+    --primary: #0a84ff; /* iOS Dark System Blue */
+    --primary-hover: #52a9ff;
+    --primary-light: #002e60;
+    --system-teal: #64d2ff;
+    --system-teal-light: #003e4d;
     
-    --text-title: #f8fafc;
-    --text-main: #cbd5e1;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
+    --bg-app: #000000; /* iOS System Background (Dark) */
+    --bg-card: #1c1c1e; /* iOS Secondary System Background (Dark) */
+    --border: #2c2c2e;
     
-    --bg-input: rgba(0, 0, 0, 0.3);
-    --border-input: rgba(255, 255, 255, 0.1);
-    --bg-black-trans: rgba(0, 0, 0, 0.4);
+    --text-title: #ffffff;
+    --text-main: #f2f2f7;
+    --text-muted: #8e8e93;
+    --text-dim: #48484a;
     
-    --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --shadow-neon: 0 0 15px rgba(0, 242, 254, 0.25), 0 0 30px rgba(79, 172, 254, 0.15);
-    --shadow-active: 0 0 25px rgba(0, 242, 254, 0.5), 0 0 50px rgba(0, 242, 254, 0.2);
+    --success: #30d158;
+    --success-bg: rgba(48, 209, 88, 0.1);
+    --warning: #ff9f0a;
+    --warning-bg: rgba(255, 159, 10, 0.1);
+    --danger: #ff453a;
+    --danger-bg: rgba(255, 69, 58, 0.15);
+    
+    --shadow-ios: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Sarabun', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Sarabun', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-    font-family: 'Sarabun', sans-serif;
     background-color: var(--bg-app);
-    background-image: var(--bg-app-gradient);
     color: var(--text-main);
-    line-height: 1.6;
+    line-height: 1.5;
     min-height: 100vh;
-    padding-bottom: 5rem;
-    overflow-x: hidden;
+    padding-bottom: 4rem;
     transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-    width: 8px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-app);
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.2);
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--neon-teal);
+/* iOS Large Title Header Style */
+header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 1.5rem 1.5rem;
 }
 
-header {
-    padding: 3rem 1.5rem 2rem 1.5rem;
-    text-align: center;
-    position: relative;
-    max-width: 1300px;
-    margin: 0 auto;
+.header-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .theme-switch-container {
+        align-self: flex-end;
+    }
 }
 
 header h1 {
     font-size: 2.2rem;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(to right, var(--neon-teal) 0%, var(--neon-blue) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
-    display: inline-flex;
+    color: var(--text-title);
+    letter-spacing: -0.8px; /* Tighter letter-spacing typical of SF Pro */
+    display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
+}
+
+header h1 i {
+    color: var(--primary);
+    font-size: 1.8rem;
 }
 
 header p {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
-    font-weight: 300;
+    font-weight: 400;
+    margin-top: 0.25rem;
 }
 
-/* Floating/Top Theme Toggle Button */
-.theme-switch-container {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-}
-
+/* iOS Style Pill Button Toggle */
 .btn-theme-toggle {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
     color: var(--text-main);
-    padding: 0.6rem 1.2rem;
-    border-radius: 30px;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
+    padding: 0.5rem 1.1rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: var(--shadow-card);
-    display: flex;
+    box-shadow: var(--shadow-ios);
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: var(--transition);
 }
 
 .btn-theme-toggle:hover {
-    border-color: var(--neon-teal-glow);
-    box-shadow: var(--shadow-neon);
-    transform: scale(1.05);
+    background-color: var(--bg-app);
+    transform: translateY(-1px);
 }
 
-/* Main Grid Layout */
+.btn-theme-toggle:active {
+    transform: translateY(0);
+}
+
+/* Container & Grid Layout */
 .container {
-    max-width: 1300px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 1rem;
     display: grid;
-    grid-template-columns: 1.3fr 1.7fr;
-    gap: 2rem;
+    grid-template-columns: 1.2fr 1.8fr;
+    gap: 1.75rem;
 }
 
 @media (max-width: 1024px) {
@@ -178,117 +167,113 @@ header p {
     }
 }
 
-/* Glassmorphism Cards */
+/* iOS Rounded Card Block (Apple Health Style) */
 .card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 2rem;
-    box-shadow: var(--shadow-card);
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-ios);
+    border: 1px solid rgba(0, 0, 0, 0.015);
     transition: var(--transition);
-    position: relative;
-    overflow: hidden;
+    height: fit-content;
 }
 
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--neon-teal), var(--neon-blue));
-    opacity: 0.7;
+body.dark-theme .card {
+    border-color: var(--border);
 }
 
 .card:hover {
-    border-color: var(--neon-teal-glow);
-    box-shadow: var(--shadow-neon);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
 }
 
+/* iOS Health-inspired Circular Metric Icon Headers */
 .card-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-title);
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    letter-spacing: 0.5px;
 }
 
 .card-title i {
-    background: linear-gradient(135deg, var(--neon-teal), var(--neon-blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background-color: var(--primary-light);
+    color: var(--primary);
+    padding: 8px;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: var(--transition);
 }
 
-/* Futuristic Tab Switcher */
+body.dark-theme .card-title i {
+    background-color: rgba(10, 132, 255, 0.15);
+}
+
+/* iOS Segmented Control Selector */
 .mode-tabs {
     display: flex;
-    background: var(--bg-black-trans);
-    border-radius: var(--radius-sm);
-    padding: 6px;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border-input);
+    background-color: rgba(118, 118, 128, 0.12);
+    border-radius: 9px;
+    padding: 2px;
+    margin-bottom: 1.5rem;
+}
+
+body.dark-theme .mode-tabs {
+    background-color: rgba(118, 118, 128, 0.24);
 }
 
 .mode-tab {
     flex: 1;
     background: transparent;
     border: none;
-    padding: 0.8rem 1rem;
-    color: var(--text-muted);
-    font-family: inherit;
-    font-size: 0.9rem;
+    padding: 0.55rem;
+    color: var(--text-main);
+    font-size: 0.85rem;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 7px;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-}
-
-.mode-tab:hover {
-    color: var(--text-title);
+    gap: 0.35rem;
 }
 
 .mode-tab.active {
-    background: var(--bg-input);
-    color: var(--neon-teal);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    color: var(--primary);
 }
 
 body.dark-theme .mode-tab.active {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(79, 172, 254, 0.15));
-    border-color: rgba(0, 242, 254, 0.3);
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+    color: #ffffff;
+    background-color: #2c2c2e;
 }
 
-/* Form Styling */
+/* Form Controls (iOS Style Textfields) */
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .form-group.inline {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 label {
     display: block;
     font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
 }
 
 input[type="date"],
@@ -296,160 +281,151 @@ input[type="number"],
 input[type="text"],
 select {
     width: 100%;
-    padding: 0.85rem 1.1rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border-input);
-    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9rem;
+    background-color: rgba(118, 118, 128, 0.08);
+    border: none;
+    border-radius: var(--radius-md);
     color: var(--text-title);
-    font-family: inherit;
     font-size: 0.95rem;
     transition: var(--transition);
 }
 
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--neon-teal-glow);
-    box-shadow: var(--shadow-neon);
+body.dark-theme input, body.dark-theme select {
+    background-color: rgba(118, 118, 128, 0.16);
 }
 
-/* Quick Interval Presets */
+input:focus, select:focus {
+    outline: none;
+    background-color: rgba(118, 118, 128, 0.12);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* iOS Preset Buttons (Soft Pill Tags) */
 .preset-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
 }
 
 .btn-preset {
-    background: var(--bg-black-trans);
-    border: 1px solid var(--border-input);
-    color: var(--text-muted);
-    padding: 0.65rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    background-color: rgba(118, 118, 128, 0.08);
+    border: none;
+    color: var(--text-main);
+    padding: 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .btn-preset:hover {
-    background: rgba(20, 184, 166, 0.08);
-    border-color: var(--neon-teal-glow);
-    color: var(--neon-teal-glow);
+    background-color: rgba(118, 118, 128, 0.15);
 }
 
 .btn-preset.active {
-    background: linear-gradient(135deg, var(--neon-teal), var(--neon-blue));
-    border-color: var(--neon-teal);
+    background-color: var(--primary);
     color: #ffffff;
     font-weight: 700;
-    box-shadow: var(--shadow-active);
 }
 
-/* Quick Drug Presets */
+/* Drug Presets Pill Badges (Capsule Shape) */
 .drug-presets {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-bottom: 1.25rem;
 }
 
 .btn-drug-preset {
-    background: var(--bg-black-trans);
-    border: 1px dashed var(--border-input);
-    color: var(--text-muted);
-    padding: 0.4rem 0.8rem;
+    background-color: rgba(118, 118, 128, 0.08);
+    border: none;
+    color: var(--primary);
+    padding: 0.45rem 0.9rem;
     border-radius: 20px;
     font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
 }
 
 .btn-drug-preset:hover {
-    background: rgba(79, 70, 229, 0.08);
-    border-color: var(--neon-indigo);
-    color: var(--text-title);
+    background-color: var(--primary-light);
+    transform: translateY(-1px);
 }
 
-/* Add Med Form Section */
+body.dark-theme .btn-drug-preset:hover {
+    background-color: rgba(10, 132, 255, 0.15);
+}
+
+/* Medication input row */
 .med-row-input {
-    background: var(--bg-black-trans);
-    border: 1px solid var(--border-input);
-    padding: 1.25rem;
-    border-radius: var(--radius-sm);
+    background-color: rgba(118, 118, 128, 0.04);
+    padding: 1rem;
+    border-radius: var(--radius-md);
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr auto;
-    gap: 0.75rem;
+    grid-template-columns: 2fr 1fr 1.2fr auto;
+    gap: 0.5rem;
     align-items: end;
+    border: 1px solid rgba(0, 0, 0, 0.015);
+}
+
+body.dark-theme .med-row-input {
+    border-color: var(--border);
 }
 
 @media (max-width: 640px) {
     .med-row-input {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 }
 
 .btn-add {
-    background: linear-gradient(135deg, var(--neon-teal), var(--neon-blue));
+    background-color: var(--primary);
     color: #ffffff;
-    font-family: inherit;
     font-weight: 700;
-    padding: 0.9rem 1.5rem;
+    padding: 0.7rem;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    height: 52px;
-}
-
-.btn-add:hover {
-    transform: scale(1.03);
-    box-shadow: var(--shadow-active);
-}
-
-/* Right Dashboard / Summary Design */
-.result-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-}
-
-.appointment-summary {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 1.5rem;
-    background: var(--bg-black-trans);
-    border: 1px solid var(--border-input);
-    border-radius: var(--radius-sm);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-}
-
-.appointment-summary::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 20%;
-    height: 60%;
-    width: 1px;
-    background: var(--border-input);
+    height: 42px;
+    width: 42px;
 }
 
 @media (max-width: 640px) {
-    .appointment-summary {
-        grid-template-columns: 1fr;
+    .btn-add {
+        width: 100%;
     }
-    .appointment-summary::after {
-        display: none;
-    }
+}
+
+.btn-add:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.04);
+}
+
+/* iOS Results Highlight Banner */
+.appointment-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    background-color: var(--bg-app);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.015);
+}
+
+body.dark-theme .appointment-summary {
+    border-color: var(--border);
 }
 
 .app-box {
@@ -457,102 +433,101 @@ input:focus, select:focus {
     flex-direction: column;
 }
 
+.app-box:last-child {
+    border-left: 1px solid var(--border);
+    padding-left: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .appointment-summary {
+        grid-template-columns: 1fr;
+    }
+    .app-box:last-child {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        padding-top: 1rem;
+    }
+}
+
 .app-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    margin-bottom: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
 }
 
 .app-date-highlight {
-    font-size: 1.8rem;
+    font-size: 1.45rem;
     font-weight: 800;
-    color: var(--neon-teal);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    line-height: 1.25;
-}
-
-body.dark-theme .app-date-highlight {
-    text-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+    color: var(--primary);
 }
 
 .app-day-highlight {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--neon-blue-glow);
-    margin-top: 0.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
-/* Warnings and alerts */
+/* Flat alerts with left indicator */
 .alert {
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-sm);
+    padding: 0.9rem 1.2rem;
+    border-radius: var(--radius-md);
     margin-bottom: 1.5rem;
+    font-size: 0.9rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    font-size: 0.9rem;
-    border: 1px solid transparent;
+    border-left: 5px solid;
+    border-top: 1px solid rgba(0,0,0,0.01);
+    border-bottom: 1px solid rgba(0,0,0,0.01);
+    border-right: 1px solid rgba(0,0,0,0.01);
+}
+
+body.dark-theme .alert {
+    border-top-color: var(--border);
+    border-bottom-color: var(--border);
+    border-right-color: var(--border);
 }
 
 .alert-warning {
-    background: rgba(234, 88, 12, 0.08);
-    border-color: rgba(234, 88, 12, 0.2);
-    color: var(--neon-orange);
+    background-color: var(--warning-bg);
+    border-left-color: var(--warning);
+    color: var(--warning);
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.08);
-    border-color: rgba(16, 185, 129, 0.2);
-    color: #059669;
-}
-
-body.dark-theme .alert-success {
-    color: #34d399;
+    background-color: var(--success-bg);
+    border-left-color: var(--success);
+    color: var(--success);
 }
 
 .alert-buttons {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.4rem;
 }
 
-.btn-sm {
-    background: var(--bg-input);
-    border: 1px solid var(--border-input);
-    color: var(--text-main);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.btn-sm:hover {
-    border-color: var(--neon-orange);
-    color: var(--neon-orange);
-}
-
-/* Medicine Daily Visual Timeline */
+/* Daily schedule (iOS Health Style list) */
 .timeline-wrapper {
-    background: var(--bg-black-trans);
-    border: 1px solid var(--border-input);
-    border-radius: var(--radius-sm);
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md);
     padding: 1.25rem;
     margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+body.dark-theme .timeline-wrapper {
+    border-color: var(--border);
 }
 
 .timeline-title {
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--text-muted);
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
 }
 
 .timeline-slots {
@@ -561,29 +536,35 @@ body.dark-theme .alert-success {
     gap: 0.5rem;
 }
 
+@media (max-width: 500px) {
+    .timeline-slots {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 .timeline-slot {
-    background: var(--bg-input);
-    border: 1px solid var(--border-input);
-    border-radius: 8px;
-    padding: 0.75rem 0.5rem;
+    background-color: var(--bg-app);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem 0.4rem;
     text-align: center;
+    transition: var(--transition);
 }
 
 .timeline-slot-header {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
 }
 
 .timeline-slot-header i {
     margin-right: 0.2rem;
 }
 
-.slot-เช้า i { color: var(--neon-orange); }
-.slot-กลางวัน i { color: var(--neon-teal-glow); }
-.slot-เย็น i { color: var(--neon-purple); }
-.slot-ก่อนนอน i { color: var(--neon-pink); }
+.slot-เช้า i { color: var(--warning); }
+.slot-กลางวัน i { color: #007aff; }
+.slot-เย็น i { color: #5856d6; }
+.slot-ก่อนนอน i { color: #ff2d55; }
 
 .timeline-pills {
     display: flex;
@@ -592,60 +573,63 @@ body.dark-theme .alert-success {
 }
 
 .timeline-pill-badge {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.4rem;
-    border-radius: 4px;
-    background: var(--bg-black-trans);
+    font-size: 0.72rem;
+    padding: 0.25rem;
+    border-radius: 5px;
+    background-color: var(--bg-card);
     color: var(--text-main);
+    border: 1px solid var(--border);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    border: 1px solid var(--border-input);
 }
 
-/* Meds list style */
+/* iOS List Separator Styling for Medications */
 .meds-container {
     margin-top: 1rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid var(--border-input);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-ios);
 }
 
 .med-list-header {
     display: grid;
     grid-template-columns: 2.2fr 1fr 1fr auto;
     gap: 0.5rem;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1.1rem;
     font-weight: 700;
     font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     color: var(--text-muted);
-    background: var(--bg-black-trans);
-    border-bottom: 1px solid var(--border-input);
+    background-color: var(--bg-app);
+    border-bottom: 1px solid var(--border);
 }
 
 .med-list-empty {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 3rem 1.5rem;
     color: var(--text-dim);
     font-style: italic;
-    background: var(--bg-input);
+    background-color: var(--bg-card);
 }
 
 .med-item {
     display: grid;
     grid-template-columns: 2.2fr 1fr 1fr auto;
     gap: 0.5rem;
-    padding: 1rem 1.25rem;
+    padding: 0.9rem 1.1rem;
     align-items: center;
-    border-bottom: 1px solid var(--border-input);
-    background: var(--bg-input);
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-card);
     transition: var(--transition);
 }
 
+.med-item:last-child {
+    border-bottom: none;
+}
+
 .med-item:hover {
-    background: rgba(20, 184, 166, 0.05);
+    background-color: rgba(0, 122, 255, 0.05);
 }
 
 .med-item-name {
@@ -660,26 +644,26 @@ body.dark-theme .alert-success {
 
 .med-item-calc {
     font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--neon-teal);
+    font-weight: 700;
+    color: var(--primary);
 }
 
 .btn-delete {
     background: transparent;
-    color: var(--neon-pink);
+    color: var(--danger);
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 6px;
+    font-size: 1.05rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
     transition: var(--transition);
 }
 
 .btn-delete:hover {
-    background: rgba(219, 39, 119, 0.1);
+    background-color: var(--danger-bg);
 }
 
-/* Action control buttons */
+/* iOS Navigation/Action Buttons */
 .action-buttons {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
@@ -688,9 +672,9 @@ body.dark-theme .alert-success {
 }
 
 .btn-action {
-    padding: 0.9rem 1.5rem;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
@@ -701,33 +685,31 @@ body.dark-theme .alert-success {
 }
 
 .btn-action-primary {
-    background: linear-gradient(135deg, var(--neon-teal), var(--neon-blue));
+    background-color: var(--primary);
     color: #ffffff;
     border: none;
 }
 
 .btn-action-primary:hover {
-    box-shadow: var(--shadow-active);
-    transform: translateY(-2px);
+    background-color: var(--primary-hover);
+    transform: scale(1.015);
 }
 
 .btn-action-secondary {
-    background: var(--bg-input);
-    border: 1px solid var(--border-input);
-    color: var(--text-main);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--primary);
 }
 
 .btn-action-secondary:hover {
-    background: var(--bg-black-trans);
-    border-color: var(--text-muted);
+    background-color: var(--bg-app);
 }
 
-/* Print simulation styling */
+/* Print adjustments */
 #print-area {
     display: none;
 }
 
-/* Print adjustments */
 @media print {
     body * {
         visibility: hidden;

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคำนวณวันนัดและจำนวนยาผู้ป่วย NCDs</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f766e">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- Load FontAwesome icons for premium design -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Load main styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-calendar-check"></i> ระบบคำนวณวันนัดและจำนวนยาผู้ป่วย NCDs</h1>
+        <p>ช่วยคำนวณนัดถัดไปตามจำนวนสัปดาห์หรือวัน พร้อมแจกแจงปริมาณยาที่ถูกต้องและพิมพ์ใบจ่ายยา</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- LEFT COLUMN: INPUT CONTROLS -->
+        <div class="card">
+            <h2 class="card-title"><i class="fa-solid fa-calculator"></i> ตั้งค่าวัดนัดหมาย</h2>
+            
+            <div class="form-group">
+                <label for="start-date"><i class="fa-solid fa-calendar-day"></i> วันนัดครั้งล่าสุด / วันเริ่มต้นจ่ายยา</label>
+                <input type="date" id="start-date">
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-clock"></i> ระยะเวลาการนัดหมาย</label>
+                <div class="form-group inline">
+                    <div>
+                        <label for="interval-weeks" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">จำนวนสัปดาห์</label>
+                        <input type="number" id="interval-weeks" min="0" placeholder="ระบุสัปดาห์">
+                    </div>
+                    <div>
+                        <label for="interval-days" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">หรือ จำนวนวัน</label>
+                        <input type="number" id="interval-days" min="0" placeholder="ระบุวัน">
+                    </div>
+                </div>
+                
+                <div class="preset-grid">
+                    <button class="btn-preset" data-weeks="4">4 สัปดาห์ (28 วัน)</button>
+                    <button class="btn-preset" data-weeks="8">8 สัปดาห์ (56 วัน)</button>
+                    <button class="btn-preset" data-weeks="12">12 สัปดาห์ (84 วัน)</button>
+                    <button class="btn-preset" data-weeks="24">24 สัปดาห์ (168 วัน)</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="buffer-days"><i class="fa-solid fa-shield-halved"></i> จำนวนวันจ่ายยาสำรอง (เผื่อเหลือเผื่อขาด)</label>
+                <input type="number" id="buffer-days" min="0" value="0" placeholder="เช่น 0, 3, 5, 7 วัน">
+            </div>
+
+            <h2 class="card-title" style="margin-top: 2rem;"><i class="fa-solid fa-pills"></i> รายการยาที่ผู้ป่วยได้รับ</h2>
+            
+            <div class="med-row-input">
+                <div>
+                    <label for="med-name">ชื่อยา</label>
+                    <input type="text" id="med-name" placeholder="ระบุชื่อยา (เช่น Metformin 500mg)">
+                </div>
+                <div>
+                    <label for="med-freq">จำนวนเม็ดต่อวัน</label>
+                    <input type="number" id="med-freq" step="0.1" min="0" placeholder="เช่น 1 หรือ 0.5">
+                </div>
+                <div>
+                    <label for="med-times">จำนวนครั้งต่อวัน</label>
+                    <input type="number" id="med-times" min="1" value="1" placeholder="ครั้ง/วัน">
+                </div>
+                <div>
+                    <button id="btn-add-med" class="btn-add">
+                        <i class="fa-solid fa-plus"></i> เพิ่มยา
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: RESULTS & SUMMARY -->
+        <div class="card result-card">
+            <h2 class="card-title"><i class="fa-solid fa-receipt"></i> สรุปผลนัดหมายและจำนวนยา</h2>
+            
+            <div class="appointment-summary">
+                <div class="app-box">
+                    <span class="app-label"><i class="fa-solid fa-calendar"></i> วันที่นัดครั้งถัดไป</span>
+                    <span class="app-date-highlight" id="next-date-display">-</span>
+                    <span class="app-day-highlight" id="next-day-display">-</span>
+                </div>
+                <div class="app-box right">
+                    <span class="app-label"><i class="fa-solid fa-hashtag"></i> จำนวนวันรวมสุทธิ</span>
+                    <span class="app-date-highlight" id="total-days-display" style="color: var(--secondary);">0 วัน</span>
+                    <span class="app-day-highlight" id="total-days-breakdown" style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted);">-</span>
+                </div>
+            </div>
+
+            <!-- Warning Area for Weekend Appointments -->
+            <div id="weekend-warning" class="alert alert-warning" style="display: none;">
+                <div>
+                    <i class="fa-solid fa-triangle-exclamation"></i> <strong>แจ้งเตือน:</strong> วันนัดถัดไปตรงกับวันหยุดสุดสัปดาห์
+                </div>
+                <div class="alert-buttons">
+                    <button class="btn-sm btn-sm-primary" id="btn-shift-prev"><i class="fa-solid fa-arrow-left"></i> เลื่อนนัดขึ้น (วันศุกร์)</button>
+                    <button class="btn-sm btn-sm-primary" id="btn-shift-next"><i class="fa-solid fa-arrow-right"></i> เลื่อนนัดลง (วันจันทร์)</button>
+                </div>
+            </div>
+
+            <div id="no-weekend-alert" class="alert alert-success" style="display: none;">
+                <div>
+                    <i class="fa-solid fa-circle-check"></i> วันนัดถัดไปตรงกับวันทำงานปกติ
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--secondary);">
+                <i class="fa-solid fa-table-list"></i> ตารางสรุปจำนวนยาที่ต้องจ่าย
+            </h3>
+
+            <div class="meds-container">
+                <div class="med-list-header">
+                    <div>ชื่อยา</div>
+                    <div>ขนาดรับประทาน</div>
+                    <div style="text-align: right; padding-right: 1.5rem;">จำนวนยาที่จ่าย</div>
+                    <div></div>
+                </div>
+                <div id="meds-list-body">
+                    <!-- Med items will be dynamically generated here -->
+                    <div class="med-list-empty" id="empty-state">
+                        ยังไม่มีรายการยา กรุณาเพิ่มรายการยาที่ได้รับจากฟอร์มด้านซ้าย
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-action btn-action-secondary" id="btn-clear-all">
+                    <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลทั้งหมด
+                </button>
+                <button class="btn-action btn-action-primary" id="btn-print">
+                    <i class="fa-solid fa-print"></i> พิมพ์ใบคำนวณยานัด
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PRINT AREA (Only visible during print) -->
+    <div id="print-area">
+        <div class="print-header">
+            <h2>ใบสรุปการจ่ายยาและวันนัดหมายผู้ป่วย</h2>
+            <p>โรงพยาบาล / คลินิกโรคไม่ติดต่อเรื้อรัง (NCDs)</p>
+        </div>
+        
+        <div class="print-section">
+            <div class="print-grid">
+                <div>
+                    <span class="print-label">วันจ่ายยาล่าสุด:</span>
+                    <span class="print-value" id="print-start-date">-</span>
+                </div>
+                <div>
+                    <span class="print-label">ระยะเวลานัด:</span>
+                    <span class="print-value" id="print-duration">-</span>
+                </div>
+            </div>
+            <div class="print-grid">
+                <div>
+                    <span class="print-label">วันนัดครั้งถัดไป:</span>
+                    <span class="print-value" id="print-next-date" style="font-weight: bold; font-size: 18px;">-</span>
+                </div>
+                <div>
+                    <span class="print-label">ยาสำรองเผื่อเหลือ:</span>
+                    <span class="print-value" id="print-buffer">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="print-section">
+            <h3 style="font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">รายการยาที่ได้รับและจำนวนที่จ่าย</h3>
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">ชื่อยา</th>
+                        <th style="width: 25%;">ขนาดและวิธีการรับประทานต่อวัน</th>
+                        <th style="width: 25%; text-align: right;">จำนวนยาที่จ่ายทั้งหมด</th>
+                    </tr>
+                </thead>
+                <tbody id="print-meds-table-body">
+                    <!-- Meds table rows will be printed here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="print-footer">
+            <p>** กรุณานำใบนี้และกระปุกยา/ซองยาเดิมมาด้วยทุกครั้งที่หมอนัด **</p>
+            <p>วันที่ออกใบสรุป: <span id="print-generation-time">-</span></p>
+        </div>
+    </div>
+
+    <!-- JavaScript logic -->
+    <script src="app.js"></script>
+</body>
+</html>

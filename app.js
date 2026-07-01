@@ -14,13 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const modeBInputs = document.getElementById('mode-b-inputs');
     const targetDateInput = document.getElementById('target-date');
     
+    // Medication elements
     const medNameInput = document.getElementById('med-name');
     const medFreqInput = document.getElementById('med-freq');
-    const medTimesInput = document.getElementById('med-times');
+    const medTimesSelect = document.getElementById('med-times');
     const btnAddMed = document.getElementById('btn-add-med');
     const medsListBody = document.getElementById('meds-list-body');
     const emptyState = document.getElementById('empty-state');
     
+    // Timeline elements
+    const pillsMorning = document.getElementById('pills-เช้า');
+    const pillsNoon = document.getElementById('pills-กลางวัน');
+    const pillsEvening = document.getElementById('pills-เย็น');
+    const pillsBedtime = document.getElementById('pills-ก่อนนอน');
+    
+    // Output displays
     const nextDateDisplay = document.getElementById('next-date-display');
     const nextDayDisplay = document.getElementById('next-day-display');
     const totalDaysDisplay = document.getElementById('total-days-display');
@@ -33,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const btnClearAll = document.getElementById('btn-clear-all');
     const btnPrint = document.getElementById('btn-print');
+    const btnThemeToggle = document.getElementById('theme-toggle');
     
     // Print Area Elements
     const printStartDate = document.getElementById('print-start-date');
@@ -66,6 +75,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Default preset: 4 weeks (28 days)
     setActivePreset(4);
+
+    // Theme Toggle Logic
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        if (btnThemeToggle) {
+            btnThemeToggle.querySelector('span').textContent = 'โหมดปกติ';
+            btnThemeToggle.querySelector('i').className = 'fa-solid fa-sun';
+        }
+    }
+
+    if (btnThemeToggle) {
+        btnThemeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            if (isDark) {
+                btnThemeToggle.querySelector('span').textContent = 'โหมดปกติ';
+                btnThemeToggle.querySelector('i').className = 'fa-solid fa-sun';
+            } else {
+                btnThemeToggle.querySelector('span').textContent = 'โหมดมืด';
+                btnThemeToggle.querySelector('i').className = 'fa-solid fa-moon';
+            }
+        });
+    }
 
     // Mode Switcher Event Listeners
     tabModeA.addEventListener('click', () => switchMode('a'));
@@ -108,15 +143,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Shift Date Buttons (for weekend handling)
     btnShiftPrev.addEventListener('click', () => {
-        shiftAppointmentDays(-1); // Shift 1 day back (e.g. Saturday to Friday)
+        shiftAppointmentDays(-1);
     });
     
     btnShiftNext.addEventListener('click', () => {
-        shiftAppointmentDays(1); // Shift to next workday
+        shiftAppointmentDays(1);
     });
 
     // Medications Listeners
     btnAddMed.addEventListener('click', addMedication);
+    
+    // Quick Drug Preset Click Event (WOW Feature - Instant Auto-Add)
+    document.querySelectorAll('.btn-drug-preset').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const name = btn.dataset.name;
+            const freq = parseFloat(btn.dataset.freq);
+            const times = btn.dataset.times;
+            const isBedtime = btn.dataset.slot === 'ก่อนนอน';
+            
+            const newMed = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name,
+                freq,
+                times: isBedtime ? '1-bedtime' : times
+            };
+            
+            medications.push(newMed);
+            renderMedications();
+            renderTimeline();
+        });
+    });
     
     // Clear All
     btnClearAll.addEventListener('click', resetApp);
@@ -159,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function shiftAppointmentDays(daysToShift) {
         if (!nextAppointmentDateObj) return;
         
-        // Adjust the next appointment date
         nextAppointmentDateObj.setDate(nextAppointmentDateObj.getDate() + daysToShift);
         
         if (currentMode === 'a') {
@@ -167,12 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = Math.abs(nextAppointmentDateObj - start);
             calculatedIntervalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            // Update days input to reflect custom shift
             intervalWeeksInput.value = '';
             intervalDaysInput.value = calculatedIntervalDays;
             removePresetActive();
         } else {
-            // In Mode B, shift adjusts the input Target Date directly
             targetDateInput.value = nextAppointmentDateObj.toISOString().split('T')[0];
         }
         
@@ -183,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!date) return '-';
         const day = date.getDate();
         const month = thaiMonths[date.getMonth()];
-        const year = date.getFullYear() + 543; // Buddhist Era
+        const year = date.getFullYear() + 543;
         return `${day} ${month} พ.ศ. ${year}`;
     }
 
@@ -195,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let daysToAdd = 0;
 
         if (currentMode === 'a') {
-            // Mode A: Calculate Target Date from interval inputs
             const weeks = parseInt(intervalWeeksInput.value) || 0;
             const days = parseInt(intervalDaysInput.value) || 0;
 
@@ -211,14 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
             nextDate.setDate(startDate.getDate() + daysToAdd);
             nextAppointmentDateObj = nextDate;
         } else {
-            // Mode B: Calculate interval days from Target Date input
             const targetVal = targetDateInput.value;
             if (!targetVal) return;
 
             const targetDate = new Date(targetVal);
             nextAppointmentDateObj = targetDate;
 
-            // Calculate difference in days
             const timeDiff = targetDate.getTime() - startDate.getTime();
             daysToAdd = Math.ceil(timeDiff / (1000 * 3600 * 24));
             
@@ -228,17 +279,14 @@ document.addEventListener('DOMContentLoaded', () => {
             calculatedIntervalDays = daysToAdd;
         }
 
-        // Check buffer days
         const bufferDays = parseInt(bufferDaysInput.value) || 0;
         totalDaysForMedication = calculatedIntervalDays + bufferDays;
 
-        // Render Appointment Outputs
         if (calculatedIntervalDays > 0) {
             nextDateDisplay.textContent = formatDateThai(nextAppointmentDateObj);
             const dayOfWeek = nextAppointmentDateObj.getDay();
             nextDayDisplay.textContent = thaiDays[dayOfWeek];
 
-            // Render Breakdown
             totalDaysDisplay.textContent = `${totalDaysForMedication} วัน`;
             if (currentMode === 'a') {
                 totalDaysBreakdown.textContent = `(ระยะเวลานัด ${calculatedIntervalDays} วัน + สำรอง ${bufferDays} วัน)`;
@@ -247,19 +295,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Weekend Check
-            if (dayOfWeek === 0 || dayOfWeek === 6) { // 0 = Sunday, 6 = Saturday
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
                 weekendWarning.style.display = 'flex';
                 noWeekendAlert.style.display = 'none';
                 
-                // Customize shift button texts
                 if (dayOfWeek === 6) { // Saturday
-                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนนัดเป็นวันศุกร์ (ลด 1 วัน)`;
-                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนนัดเป็นวันจันทร์ (เพิ่ม 2 วัน)`;
+                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนคิวเป็นวันศุกร์ (-1 วัน)`;
+                    btnShiftNext.innerHTML = `เลื่อนเป็นวันจันทร์ (+2 วัน) <i class="fa-solid fa-arrow-right"></i>`;
                     btnShiftPrev.onclick = () => shiftAppointmentDays(-1);
                     btnShiftNext.onclick = () => shiftAppointmentDays(2);
                 } else { // Sunday
-                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนนัดเป็นวันศุกร์ (ลด 2 วัน)`;
-                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนนัดเป็นวันจันทร์ (เพิ่ม 1 วัน)`;
+                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนคิวเป็นวันศุกร์ (-2 วัน)`;
+                    btnShiftNext.innerHTML = `เลื่อนเป็นวันจันทร์ (+1 วัน) <i class="fa-solid fa-arrow-right"></i>`;
                     btnShiftPrev.onclick = () => shiftAppointmentDays(-2);
                     btnShiftNext.onclick = () => shiftAppointmentDays(1);
                 }
@@ -276,8 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
             noWeekendAlert.style.display = 'none';
         }
 
-        // Refresh medication calculations
         renderMedications();
+        renderTimeline();
     }
 
     function addMedication(e) {
@@ -285,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const name = medNameInput.value.trim();
         const freq = parseFloat(medFreqInput.value);
-        const times = parseInt(medTimesInput.value) || 1;
+        const times = medTimesSelect.value;
 
         if (!name) {
             alert('กรุณากรอกชื่อยา');
@@ -294,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (isNaN(freq) || freq <= 0) {
-            alert('กรุณาระบุจำนวนเม็ดต่อวันให้ถูกต้อง');
+            alert('กรุณาระบุจำนวนเม็ดต่อครั้งให้ถูกต้อง');
             medFreqInput.focus();
             return;
         }
@@ -308,22 +355,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         medications.push(newMed);
         
-        // Reset Inputs
         medNameInput.value = '';
         medFreqInput.value = '';
-        medTimesInput.value = '1';
+        medTimesSelect.value = '1';
         medNameInput.focus();
 
         renderMedications();
+        renderTimeline();
     }
 
     function deleteMedication(id) {
         medications = medications.filter(med => med.id !== id);
         renderMedications();
+        renderTimeline();
+    }
+
+    function getDoseText(med) {
+        if (med.times === '1-bedtime') {
+            return `${med.freq} เม็ด ก่อนนอน`;
+        }
+        const freqVal = parseInt(med.times) || 1;
+        return `${med.freq} เม็ด, วันละ ${freqVal} ครั้ง`;
+    }
+
+    function getDailyTotal(med) {
+        if (med.times === '1-bedtime') {
+            return med.freq;
+        }
+        const freqVal = parseInt(med.times) || 1;
+        return med.freq * freqVal;
     }
 
     function renderMedications() {
-        // Clear body
         medsListBody.innerHTML = '';
 
         if (medications.length === 0) {
@@ -335,21 +398,20 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState.style.display = 'none';
 
         medications.forEach(med => {
-            const dailyDose = med.freq * med.times;
+            const dailyDose = getDailyTotal(med);
             const totalQty = Math.ceil(dailyDose * totalDaysForMedication);
 
             const row = document.createElement('div');
             row.className = 'med-item';
             row.innerHTML = `
                 <div class="med-item-name">${med.name}</div>
-                <div class="med-item-dose">${med.freq} เม็ด, วันละ ${med.times} ครั้ง (ทานวันละ ${dailyDose} เม็ด)</div>
+                <div class="med-item-dose">${getDoseText(med)} (วันละ ${dailyDose} เม็ด)</div>
                 <div class="med-item-calc">${totalQty} เม็ด</div>
                 <div>
                     <button class="btn-delete" data-id="${med.id}"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
             
-            // Delete Listener
             row.querySelector('.btn-delete').addEventListener('click', () => {
                 deleteMedication(med.id);
             });
@@ -358,8 +420,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Dynamic Visual Timeline rendering (WOW feature)
+    function renderTimeline() {
+        // Clear slots
+        pillsMorning.innerHTML = '';
+        pillsNoon.innerHTML = '';
+        pillsEvening.innerHTML = '';
+        pillsBedtime.innerHTML = '';
+
+        const emptyBadge = () => {
+            const span = document.createElement('span');
+            span.className = 'timeline-pill-badge';
+            span.style.color = 'var(--text-dim)';
+            span.textContent = 'ไม่มี';
+            return span;
+        };
+
+        let slotsHasPills = { morning: false, noon: false, evening: false, bedtime: false };
+
+        medications.forEach(med => {
+            const addBadge = (container, slotKey) => {
+                const span = document.createElement('span');
+                span.className = 'timeline-pill-badge';
+                span.title = `${med.name} - ${med.freq} เม็ด`;
+                span.textContent = `${med.name} (${med.freq} ม.)`;
+                container.appendChild(span);
+                slotsHasPills[slotKey] = true;
+            };
+
+            const t = med.times;
+            if (t === '1') { // เช้า
+                addBadge(pillsMorning, 'morning');
+            } else if (t === '2') { // เช้า, เย็น
+                addBadge(pillsMorning, 'morning');
+                addBadge(pillsEvening, 'evening');
+            } else if (t === '3') { // เช้า, กลางวัน, เย็น
+                addBadge(pillsMorning, 'morning');
+                addBadge(pillsNoon, 'noon');
+                addBadge(pillsEvening, 'evening');
+            } else if (t === '4') { // เช้า, กลางวัน, เย็น, ก่อนนอน
+                addBadge(pillsMorning, 'morning');
+                addBadge(pillsNoon, 'noon');
+                addBadge(pillsEvening, 'evening');
+                addBadge(pillsBedtime, 'bedtime');
+            } else if (t === '1-bedtime') { // ก่อนนอน
+                addBadge(pillsBedtime, 'bedtime');
+            }
+        });
+
+        // Add empty badges if slot has no meds
+        if (!slotsHasPills.morning) pillsMorning.appendChild(emptyBadge());
+        if (!slotsHasPills.noon) pillsNoon.appendChild(emptyBadge());
+        if (!slotsHasPills.evening) pillsEvening.appendChild(emptyBadge());
+        if (!slotsHasPills.bedtime) pillsBedtime.appendChild(emptyBadge());
+    }
+
     function resetApp() {
-        if (confirm('คุณต้องการล้างข้อมูลทั้งหมดหรือไม่?')) {
+        if (confirm('คุณต้องการล้างข้อมูลแผนงานนี้หรือไม่?')) {
             medications = [];
             startDateInput.value = today.toISOString().split('T')[0];
             
@@ -370,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bufferDaysInput.value = '0';
             medNameInput.value = '';
             medFreqInput.value = '';
-            medTimesInput.value = '1';
+            medTimesSelect.value = '1';
             switchMode('a');
             setActivePreset(4);
             calculateAll();
@@ -383,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Fill Print Details
         printStartDate.textContent = formatDateThai(new Date(startDateInput.value));
         
         if (currentMode === 'a') {
@@ -395,34 +511,30 @@ document.addEventListener('DOMContentLoaded', () => {
         printNextDate.textContent = `${formatDateThai(nextAppointmentDateObj)} (${thaiDays[nextAppointmentDateObj.getDay()]})`;
         printBuffer.textContent = `${bufferDaysInput.value || 0} วัน (ยอดคำนวณยารวมทั้งหมด ${totalDaysForMedication} วัน)`;
         
-        // Current Time for Receipt
         const now = new Date();
         printGenerationTime.textContent = now.toLocaleString('th-TH');
 
-        // Populate Table
         printMedsTableBody.innerHTML = '';
         if (medications.length === 0) {
             printMedsTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">ไม่มีรายการยา</td></tr>`;
         } else {
             medications.forEach(med => {
-                const dailyDose = med.freq * med.times;
+                const dailyDose = getDailyTotal(med);
                 const totalQty = Math.ceil(dailyDose * totalDaysForMedication);
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${med.name}</strong></td>
-                    <td>ทานวันละ ${dailyDose} เม็ด (${med.freq} เม็ด x ${med.times} ครั้ง)</td>
+                    <td>ทานวันละ ${dailyDose} เม็ด (${getDoseText(med)})</td>
                     <td style="text-align: right; font-weight: bold;">${totalQty} เม็ด</td>
                 `;
                 printMedsTableBody.appendChild(tr);
             });
         }
 
-        // Trigger print window
         window.print();
     }
 
-    // Initial Calculation
     calculateAll();
 });
 

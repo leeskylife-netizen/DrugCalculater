@@ -1,10 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const startDateInput = document.getElementById('start-date');
+    const startDateLabel = document.getElementById('start-date-label');
     const intervalWeeksInput = document.getElementById('interval-weeks');
     const intervalDaysInput = document.getElementById('interval-days');
     const presetButtons = document.querySelectorAll('.btn-preset');
     const bufferDaysInput = document.getElementById('buffer-days');
+    
+    // Mode switcher elements
+    const tabModeA = document.getElementById('tab-mode-a');
+    const tabModeB = document.getElementById('tab-mode-b');
+    const modeAInputs = document.getElementById('mode-a-inputs');
+    const modeBInputs = document.getElementById('mode-b-inputs');
+    const targetDateInput = document.getElementById('target-date');
     
     const medNameInput = document.getElementById('med-name');
     const medFreqInput = document.getElementById('med-freq');
@@ -35,8 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const printGenerationTime = document.getElementById('print-generation-time');
 
     // App State
+    let currentMode = 'a'; // 'a' = คำนวณวันนัดถัดไป, 'b' = คำนวณยาถึงวันนัดเดิม
     let medications = [];
-    let calculatedIntervalDays = 0; // Days from weeks + days input
+    let calculatedIntervalDays = 0; // Days between start and next appt
     let totalDaysForMedication = 0; // Interval + buffer
     let nextAppointmentDateObj = null;
 
@@ -50,11 +59,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date();
     startDateInput.value = today.toISOString().split('T')[0];
     
+    // Set Target Date default for Mode B: today + 28 days
+    const defaultTarget = new Date(today);
+    defaultTarget.setDate(today.getDate() + 28);
+    targetDateInput.value = defaultTarget.toISOString().split('T')[0];
+    
     // Default preset: 4 weeks (28 days)
     setActivePreset(4);
 
+    // Mode Switcher Event Listeners
+    tabModeA.addEventListener('click', () => switchMode('a'));
+    tabModeB.addEventListener('click', () => switchMode('b'));
+
     // Event Listeners for Date Inputs
     startDateInput.addEventListener('change', calculateAll);
+    targetDateInput.addEventListener('change', calculateAll);
+    
     intervalWeeksInput.addEventListener('input', () => {
         if (intervalWeeksInput.value !== '') {
             intervalDaysInput.value = '';
@@ -105,6 +125,24 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPrint.addEventListener('click', printSlip);
 
     // Functions
+    function switchMode(mode) {
+        currentMode = mode;
+        if (mode === 'a') {
+            tabModeA.classList.add('active');
+            tabModeB.classList.remove('active');
+            modeAInputs.style.display = 'block';
+            modeBInputs.style.display = 'none';
+            startDateLabel.innerHTML = `<i class="fa-solid fa-calendar-day"></i> วันที่ผู้ป่วยมาวันนี้ / วันเริ่มต้นจ่ายยา`;
+        } else {
+            tabModeA.classList.remove('active');
+            tabModeB.classList.add('active');
+            modeAInputs.style.display = 'none';
+            modeBInputs.style.display = 'block';
+            startDateLabel.innerHTML = `<i class="fa-solid fa-calendar-day"></i> วันที่ผู้ป่วยมาวันนี้`;
+        }
+        calculateAll();
+    }
+
     function removePresetActive() {
         presetButtons.forEach(btn => btn.classList.remove('active'));
     }
@@ -124,15 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Adjust the next appointment date
         nextAppointmentDateObj.setDate(nextAppointmentDateObj.getDate() + daysToShift);
         
-        // Recalculate how many interval days this results in
-        const start = new Date(startDateInput.value);
-        const diffTime = Math.abs(nextAppointmentDateObj - start);
-        calculatedIntervalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        // Update days input to reflect custom shift
-        intervalWeeksInput.value = '';
-        intervalDaysInput.value = calculatedIntervalDays;
-        removePresetActive();
+        if (currentMode === 'a') {
+            const start = new Date(startDateInput.value);
+            const diffTime = Math.abs(nextAppointmentDateObj - start);
+            calculatedIntervalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Update days input to reflect custom shift
+            intervalWeeksInput.value = '';
+            intervalDaysInput.value = calculatedIntervalDays;
+            removePresetActive();
+        } else {
+            // In Mode B, shift adjusts the input Target Date directly
+            targetDateInput.value = nextAppointmentDateObj.toISOString().split('T')[0];
+        }
         
         calculateAll();
     }
@@ -152,35 +194,57 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = new Date(startVal);
         let daysToAdd = 0;
 
-        const weeks = parseInt(intervalWeeksInput.value) || 0;
-        const days = parseInt(intervalDaysInput.value) || 0;
+        if (currentMode === 'a') {
+            // Mode A: Calculate Target Date from interval inputs
+            const weeks = parseInt(intervalWeeksInput.value) || 0;
+            const days = parseInt(intervalDaysInput.value) || 0;
 
-        if (weeks > 0) {
-            daysToAdd = weeks * 7;
-        } else if (days > 0) {
-            daysToAdd = days;
+            if (weeks > 0) {
+                daysToAdd = weeks * 7;
+            } else if (days > 0) {
+                daysToAdd = days;
+            }
+
+            calculatedIntervalDays = daysToAdd;
+            
+            const nextDate = new Date(startDate);
+            nextDate.setDate(startDate.getDate() + daysToAdd);
+            nextAppointmentDateObj = nextDate;
+        } else {
+            // Mode B: Calculate interval days from Target Date input
+            const targetVal = targetDateInput.value;
+            if (!targetVal) return;
+
+            const targetDate = new Date(targetVal);
+            nextAppointmentDateObj = targetDate;
+
+            // Calculate difference in days
+            const timeDiff = targetDate.getTime() - startDate.getTime();
+            daysToAdd = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            if (daysToAdd < 0) {
+                daysToAdd = 0;
+            }
+            calculatedIntervalDays = daysToAdd;
         }
-
-        calculatedIntervalDays = daysToAdd;
-        
-        // Target Next Appointment Date
-        const nextDate = new Date(startDate);
-        nextDate.setDate(startDate.getDate() + daysToAdd);
-        nextAppointmentDateObj = nextDate;
 
         // Check buffer days
         const bufferDays = parseInt(bufferDaysInput.value) || 0;
-        totalDaysForMedication = daysToAdd + bufferDays;
+        totalDaysForMedication = calculatedIntervalDays + bufferDays;
 
         // Render Appointment Outputs
-        if (daysToAdd > 0) {
-            nextDateDisplay.textContent = formatDateThai(nextDate);
-            const dayOfWeek = nextDate.getDay();
+        if (calculatedIntervalDays > 0) {
+            nextDateDisplay.textContent = formatDateThai(nextAppointmentDateObj);
+            const dayOfWeek = nextAppointmentDateObj.getDay();
             nextDayDisplay.textContent = thaiDays[dayOfWeek];
 
             // Render Breakdown
             totalDaysDisplay.textContent = `${totalDaysForMedication} วัน`;
-            totalDaysBreakdown.textContent = `(ระยะเวลานัด ${daysToAdd} วัน + สำรอง ${bufferDays} วัน)`;
+            if (currentMode === 'a') {
+                totalDaysBreakdown.textContent = `(ระยะเวลานัด ${calculatedIntervalDays} วัน + สำรอง ${bufferDays} วัน)`;
+            } else {
+                totalDaysBreakdown.textContent = `(ระยะเวลาถึงวันนัดเดิม ${calculatedIntervalDays} วัน + สำรอง ${bufferDays} วัน)`;
+            }
 
             // Weekend Check
             if (dayOfWeek === 0 || dayOfWeek === 6) { // 0 = Sunday, 6 = Saturday
@@ -189,14 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Customize shift button texts
                 if (dayOfWeek === 6) { // Saturday
-                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนขึ้น 1 วัน (วันศุกร์)`;
-                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนลง 2 วัน (วันจันทร์)`;
-                    // Setup custom shift offsets
+                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนนัดเป็นวันศุกร์ (ลด 1 วัน)`;
+                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนนัดเป็นวันจันทร์ (เพิ่ม 2 วัน)`;
                     btnShiftPrev.onclick = () => shiftAppointmentDays(-1);
                     btnShiftNext.onclick = () => shiftAppointmentDays(2);
                 } else { // Sunday
-                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนขึ้น 2 วัน (วันศุกร์)`;
-                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนลง 1 วัน (วันจันทร์)`;
+                    btnShiftPrev.innerHTML = `<i class="fa-solid fa-arrow-left"></i> เลื่อนนัดเป็นวันศุกร์ (ลด 2 วัน)`;
+                    btnShiftNext.innerHTML = `<i class="fa-solid fa-arrow-right"></i> เลื่อนนัดเป็นวันจันทร์ (เพิ่ม 1 วัน)`;
                     btnShiftPrev.onclick = () => shiftAppointmentDays(-2);
                     btnShiftNext.onclick = () => shiftAppointmentDays(1);
                 }
@@ -299,10 +362,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('คุณต้องการล้างข้อมูลทั้งหมดหรือไม่?')) {
             medications = [];
             startDateInput.value = today.toISOString().split('T')[0];
+            
+            const defaultTarget = new Date(today);
+            defaultTarget.setDate(today.getDate() + 28);
+            targetDateInput.value = defaultTarget.toISOString().split('T')[0];
+            
             bufferDaysInput.value = '0';
             medNameInput.value = '';
             medFreqInput.value = '';
             medTimesInput.value = '1';
+            switchMode('a');
             setActivePreset(4);
             calculateAll();
         }
@@ -316,7 +385,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Fill Print Details
         printStartDate.textContent = formatDateThai(new Date(startDateInput.value));
-        printDuration.textContent = `${calculatedIntervalDays} วัน (${intervalWeeksInput.value ? intervalWeeksInput.value + ' สัปดาห์' : 'กำหนดเอง'})`;
+        
+        if (currentMode === 'a') {
+            printDuration.textContent = `${calculatedIntervalDays} วัน (${intervalWeeksInput.value ? intervalWeeksInput.value + ' สัปดาห์' : 'กำหนดเอง'})`;
+        } else {
+            printDuration.textContent = `${calculatedIntervalDays} วัน (คำนวณแบบจ่ายยาถึงวันนัดหมายเดิม)`;
+        }
+        
         printNextDate.textContent = `${formatDateThai(nextAppointmentDateObj)} (${thaiDays[nextAppointmentDateObj.getDay()]})`;
         printBuffer.textContent = `${bufferDaysInput.value || 0} วัน (ยอดคำนวณยารวมทั้งหมด ${totalDaysForMedication} วัน)`;
         

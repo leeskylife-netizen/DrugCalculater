@@ -23,31 +23,47 @@
         
         <!-- LEFT COLUMN: INPUT CONTROLS -->
         <div class="card">
-            <h2 class="card-title"><i class="fa-solid fa-calculator"></i> ตั้งค่าวัดนัดหมาย</h2>
+            <h2 class="card-title"><i class="fa-solid fa-calculator"></i> ตั้งค่าการคำนวณ</h2>
             
-            <div class="form-group">
-                <label for="start-date"><i class="fa-solid fa-calendar-day"></i> วันนัดครั้งล่าสุด / วันเริ่มต้นจ่ายยา</label>
-                <input type="date" id="start-date">
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="tab-mode-a" data-mode="a"><i class="fa-solid fa-calendar-plus"></i> โหมด A: หาคิวนัดถัดไป</button>
+                <button class="mode-tab" id="tab-mode-b" data-mode="b"><i class="fa-solid fa-calendar-check"></i> โหมด B: จ่ายยาถึงนัดเดิม</button>
             </div>
 
             <div class="form-group">
-                <label><i class="fa-solid fa-clock"></i> ระยะเวลาการนัดหมาย</label>
-                <div class="form-group inline">
-                    <div>
-                        <label for="interval-weeks" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">จำนวนสัปดาห์</label>
-                        <input type="number" id="interval-weeks" min="0" placeholder="ระบุสัปดาห์">
+                <label for="start-date" id="start-date-label"><i class="fa-solid fa-calendar-day"></i> วันที่ผู้ป่วยมาวันนี้ / วันเริ่มต้นจ่ายยา</label>
+                <input type="date" id="start-date">
+            </div>
+
+            <!-- MODE A INPUTS: CALCULATE NEXT APPOINTMENT DATE -->
+            <div id="mode-a-inputs">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-clock"></i> ระยะเวลาการนัดหมาย</label>
+                    <div class="form-group inline">
+                        <div>
+                            <label for="interval-weeks" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">จำนวนสัปดาห์</label>
+                            <input type="number" id="interval-weeks" min="0" placeholder="ระบุสัปดาห์">
+                        </div>
+                        <div>
+                            <label for="interval-days" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">หรือ จำนวนวัน</label>
+                            <input type="number" id="interval-days" min="0" placeholder="ระบุวัน">
+                        </div>
                     </div>
-                    <div>
-                        <label for="interval-days" style="font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">หรือ จำนวนวัน</label>
-                        <input type="number" id="interval-days" min="0" placeholder="ระบุวัน">
+                    
+                    <div class="preset-grid">
+                        <button class="btn-preset" data-weeks="4">4 สัปดาห์ (28 วัน)</button>
+                        <button class="btn-preset" data-weeks="8">8 สัปดาห์ (56 วัน)</button>
+                        <button class="btn-preset" data-weeks="12">12 สัปดาห์ (84 วัน)</button>
+                        <button class="btn-preset" data-weeks="24">24 สัปดาห์ (168 วัน)</button>
                     </div>
                 </div>
-                
-                <div class="preset-grid">
-                    <button class="btn-preset" data-weeks="4">4 สัปดาห์ (28 วัน)</button>
-                    <button class="btn-preset" data-weeks="8">8 สัปดาห์ (56 วัน)</button>
-                    <button class="btn-preset" data-weeks="12">12 สัปดาห์ (84 วัน)</button>
-                    <button class="btn-preset" data-weeks="24">24 สัปดาห์ (168 วัน)</button>
+            </div>
+
+            <!-- MODE B INPUTS: CALCULATE MEDICINE QUANTITY TO TARGET APPOINTMENT DATE -->
+            <div id="mode-b-inputs" style="display: none;">
+                <div class="form-group">
+                    <label for="target-date"><i class="fa-solid fa-calendar-check"></i> วันนัดหมายครั้งถัดไปเดิมของผู้ป่วย</label>
+                    <input type="date" id="target-date">
                 </div>
             </div>
 

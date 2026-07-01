@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v1';
+const CACHE_NAME = 'ncd-app-cache-v2'; // อัปเกรดเวอร์ชันแคชเพื่อบังคับอัปเดตไฟล์ในเบราว์เซอร์
 const ASSETS = [
   './',
   './index.html',
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
-    })
+    }).then(() => self.skipWaiting()) // บังคับให้เริ่มทำงานทันทีที่ติดตั้งเสร็จ
   );
 });
 
@@ -30,15 +30,28 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // ควบคุมเพจทั้งหมดทันที
   );
 });
 
-// Fetch Cache First
+// ใช้กลยุทธ์ Network First (เช็คอินเทอร์เน็ตดึงข้อมูลล่าสุดก่อน หากออฟไลน์ค่อยดึงจากแคช)
+// ป้องกันปัญหาแคชค้างในเบราว์เซอร์ของผู้ใช้งาน
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        // หากดึงข้อมูลสำเร็จ ให้อัปเดตข้อมูลลงแคชด้วย
+        if (networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // หากไม่มีอินเทอร์เน็ต ให้ดึงไฟล์จากแคชมาใช้แทน
+        return caches.match(event.request);
+      })
   );
 });

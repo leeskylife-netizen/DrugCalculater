@@ -1,3 +1,10 @@
+// Source for family-tree.bundle.js / family-tree.css. This file itself is not
+// loaded by the browser — family-tree.html loads the pre-built bundle so the
+// page has no CDN dependency and works offline. After editing this file,
+// rebuild both artifacts:
+//   npm install --no-save react@18.3.1 react-dom@18.3.1 lucide-react@0.454.0 esbuild@0.28.1 tailwindcss@3.4.13
+//   npx esbuild family-tree-app.js --bundle --minify --format=iife --define:process.env.NODE_ENV='"production"' --loader:.js=jsx --outfile=family-tree.bundle.js
+//   npx tailwindcss -i <(echo '@tailwind base;@tailwind components;@tailwind utilities;') -o family-tree.css --minify --content family-tree-app.js
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import {
@@ -6,7 +13,7 @@ import {
   Download, Upload, Route, Moon, Sun, UserPlus, Image as ImageIcon,
   Table, Printer, Share2, Loader2, Activity, CalendarClock, BookOpen,
   Network, Briefcase, GraduationCap, Building, HeartHandshake, Map
-} from 'https://esm.sh/lucide-react@0.454.0?external=react';
+} from 'lucide-react';
 
 // --- 1. ข้อมูลจำลองตั้งต้น (Master Data) ---
 const initialData = [

@@ -6,22 +6,8 @@
   <title>Family Tree & Genogram — ผังครอบครัวและระบบนิเวศ</title>
   <meta name="theme-color" content="#4f46e5">
 
-  <!-- Tailwind (JIT, no build step — matches this project's no-build static setup) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Pin a single React instance for every module below (app code + lucide-react icons) -->
-  <script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@18.3.1",
-      "react-dom": "https://esm.sh/react-dom@18.3.1",
-      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
-    }
-  }
-  </script>
-
-  <!-- In-browser JSX transform (no build step) -->
-  <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+  <!-- Pre-built locally (see family-tree-app.js header for the build command) — no CDN needed at runtime, works offline like the rest of this PWA -->
+  <link rel="stylesheet" href="family-tree.css">
 
   <style>
     html, body, #root { height: 100%; margin: 0; }
@@ -30,6 +16,6 @@
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" data-type="module" data-presets="react" src="family-tree-app.js"></script>
+  <script src="family-tree.bundle.js"></script>
 </body>
 </html>

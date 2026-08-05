@@ -495,9 +495,9 @@ function App() {
 
     return (
       <li className="relative">
-        {hasParents && <div className="absolute left-1/2 -translate-x-1/2 z-20 rounded-full" style={{ top: '40px', width: '8px', height: '8px', backgroundColor: theme.dotColor, transform: 'translate(-50%, -50%)' }}></div>}
+        {hasParents && <div className="absolute left-1/2 -translate-x-1/2 z-20 rounded-full" style={{ top: '24px', width: '8px', height: '8px', backgroundColor: theme.dotColor, transform: 'translate(-50%, -50%)' }}></div>}
         <div className="inline-block relative">
-          <div className="flex items-center justify-center relative z-10 px-2 py-8">
+          <div className="flex items-center justify-center relative z-10 px-2 py-4">
             <PersonCard person={node.main} />
             {node.spouse && (
               <>
@@ -683,16 +683,16 @@ function App() {
 
       {/* CSS FOR TREE & PRINT */}
       <style>{`
-        .family-tree ul { padding-top: 40px; position: relative; display: flex; justify-content: center; padding-left: 0; margin: 0; }
-        .family-tree li { text-align: center; list-style-type: none; position: relative; padding: 40px 28px 0 28px; }
-        .family-tree li::before, .family-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid ${theme.lineColor}; width: 50%; height: 40px; }
+        .family-tree ul { padding-top: 24px; position: relative; display: flex; justify-content: center; padding-left: 0; margin: 0; }
+        .family-tree li { text-align: center; list-style-type: none; position: relative; padding: 24px 28px 0 28px; }
+        .family-tree li::before, .family-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid ${theme.lineColor}; width: 50%; height: 24px; }
         .family-tree li::after { right: auto; left: 50%; border-left: 2px solid ${theme.lineColor}; }
         .family-tree li:only-child::after, .family-tree li:only-child::before { display: none; }
         .family-tree li:only-child { padding-top: 0; }
         .family-tree li:first-child::before, .family-tree li:last-child::after { border: 0 none; }
         .family-tree li:last-child::before { border-right: 2px solid ${theme.lineColor}; border-radius: 0; }
         .family-tree li:first-child::after { border-radius: 0; }
-        .family-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid ${theme.lineColor}; width: 0; height: 40px; transform: translateX(-50%); }
+        .family-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid ${theme.lineColor}; width: 0; height: 24px; transform: translateX(-50%); }
 
         @page { size: landscape; margin: 10mm; }
         @media print {

@@ -371,7 +371,6 @@ function App() {
     bg: isDarkMode ? 'bg-slate-900' : 'bg-[#f4f7fa]',
     text: isDarkMode ? 'text-slate-100' : 'text-slate-800',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
-    cardBg: isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-xl shadow-slate-200/50',
     glassPanel: isDarkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-white/90 border-white shadow-xl shadow-slate-200/50 backdrop-blur-xl',
     lineColor: isDarkMode ? '#475569' : '#94a3b8',
     dotColor: isDarkMode ? '#94a3b8' : '#64748b',
@@ -433,15 +432,18 @@ function App() {
       innerContent = <X className={`w-8 h-8 ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}`} strokeWidth={3} />;
     }
 
-    let cardEffects = isIndex ? 'border-indigo-400 border-[2px]' : 'border-slate-200 border';
-    if (isDarkMode) cardEffects = isIndex ? 'border-indigo-500 border-[2px]' : 'border-slate-700 border';
-    if (isHighlighted) cardEffects += ' ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-20';
-    if (isInPath) cardEffects += ` ring-4 ring-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)] scale-105 z-20 ${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-50'}`;
+    // Plain medical-genogram look: no card box. Index-patient status is
+    // already conveyed by the shape's own double border below, so the only
+    // things the wrapping element still needs a visible ring for are the
+    // transient highlight states (search match / path-finder result).
+    let cardEffects = '';
+    if (isHighlighted) cardEffects += ' ring-4 ring-yellow-400 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-20';
+    if (isInPath) cardEffects += ` ring-4 ring-emerald-400 rounded-xl shadow-[0_0_20px_rgba(52,211,153,0.6)] scale-105 z-20 ${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-50'}`;
 
     return (
       <div
-        className={`no-drag group relative w-[130px] flex flex-col items-center rounded-xl transition-all duration-300 p-4 cursor-pointer
-        ${theme.cardBg} ${cardEffects} ${pathDimmed ? 'opacity-20 grayscale scale-95' : 'hover:-translate-y-2 hover:shadow-2xl'}`}
+        className={`no-drag group relative w-[130px] flex flex-col items-center transition-all duration-300 p-4 cursor-pointer
+        ${cardEffects} ${pathDimmed ? 'opacity-20 grayscale scale-95' : 'hover:-translate-y-2'}`}
         onClick={() => handleCardClick(person)}
       >
         {isIndex && <div className="absolute -top-3 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md z-10 no-print">ผู้ป่วยหลัก</div>}
@@ -464,7 +466,7 @@ function App() {
         )}
 
         {/* Shape Render */}
-        <div className={`relative flex items-center justify-center shadow-sm ${shapeClass} ${shapeBg} ${shapeBorder} ${isDeceased && person.nodeType==='person' ? 'grayscale opacity-70' : ''}`}>
+        <div className={`relative flex items-center justify-center shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:scale-110 ${shapeClass} ${shapeBg} ${shapeBorder} ${isDeceased && person.nodeType==='person' ? 'grayscale opacity-70' : ''}`}>
           {person.nodeType === 'person' ? <span className={`text-3xl ${isUnknown ? '-rotate-45' : ''}`}>{innerContent}</span> : innerContent}
           {isDeceased && person.nodeType === 'person' && (
              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

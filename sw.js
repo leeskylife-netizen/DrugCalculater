@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v11'; // v11: เพิ่มหน้า Family Tree / Genogram (ทำงานออฟไลน์ได้ ไม่พึ่ง CDN)
+const CACHE_NAME = 'ncd-app-cache-v12'; // v12: เปลี่ยนฟอนต์เป็น Sarabun (self-hosted, ออฟไลน์ได้)
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,17 @@ const ASSETS = [
   './family-tree.html',
   './family-tree.bundle.js',
   './family-tree.css',
+  './fonts/sarabun.css',
+  './fonts/sarabun-300-thai.woff2',
+  './fonts/sarabun-300-latin.woff2',
+  './fonts/sarabun-400-thai.woff2',
+  './fonts/sarabun-400-latin.woff2',
+  './fonts/sarabun-500-thai.woff2',
+  './fonts/sarabun-500-latin.woff2',
+  './fonts/sarabun-600-thai.woff2',
+  './fonts/sarabun-600-latin.woff2',
+  './fonts/sarabun-700-thai.woff2',
+  './fonts/sarabun-700-latin.woff2',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 

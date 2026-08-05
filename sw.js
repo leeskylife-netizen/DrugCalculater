@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v13'; // v13: รองรับหลายผังครอบครัว (case switcher)
+const CACHE_NAME = 'ncd-app-cache-v14'; // v14: เส้นความสัมพันธ์ข้ามสาย (cross-tree relationship links)
 const ASSETS = [
   './',
   './index.html',

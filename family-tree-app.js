@@ -12,7 +12,7 @@ import {
   Trash2, X, Search, Navigation, ChevronDown, ChevronUp,
   Download, Upload, Route, Moon, Sun, UserPlus, Image as ImageIcon,
   Table, Printer, Share2, Loader2, Activity, CalendarClock, BookOpen,
-  Network, Briefcase, GraduationCap, Building, HeartHandshake, Map
+  Network, Briefcase, GraduationCap, Building, HeartHandshake, Map, Link2
 } from 'lucide-react';
 
 // --- 1. ข้อมูลจำลองตั้งต้น (Master Data) ---
@@ -69,6 +69,16 @@ function App() {
 
   // Interactions
   const [pathFinder, setPathFinder] = useState({ active: false, nodeA: null, nodeB: null, path: [] });
+  // Relationship links: extra connector lines between any two people that
+  // aren't a spouse pair — e.g. an uncle and a nephew on a different branch.
+  // Positions are computed from the rendered DOM (see the effect below) since
+  // the tree is a pure-CSS flow layout with no coordinate system of its own.
+  const [extraLinks, setExtraLinks] = useState([]);
+  const [linkMode, setLinkMode] = useState({ active: false, personA: null });
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
+  const [editingLink, setEditingLink] = useState(null);
+  const [linkFormData, setLinkFormData] = useState({ id: '', personA: '', personB: '', style: 'close', label: '' });
+  const [linkPositions, setLinkPositions] = useState([]);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -113,6 +123,7 @@ function App() {
       caseList = [{ id: activeId, name: 'ผังที่ 1' }];
       localStorage.setItem(`masterpieceFamilyTree_${activeId}`, legacyData || JSON.stringify(initialData));
       localStorage.setItem(`masterpieceEcoMap_${activeId}`, legacyEco || JSON.stringify(initialEcoNodes));
+      localStorage.setItem(`masterpieceLinks_${activeId}`, JSON.stringify([]));
       localStorage.setItem('masterpieceCases', JSON.stringify(caseList));
       localStorage.setItem('masterpieceActiveCaseId', activeId);
     }
@@ -120,33 +131,39 @@ function App() {
     setActiveCaseId(activeId);
     const savedFamily = localStorage.getItem(`masterpieceFamilyTree_${activeId}`);
     const savedEco = localStorage.getItem(`masterpieceEcoMap_${activeId}`);
+    const savedLinks = localStorage.getItem(`masterpieceLinks_${activeId}`);
     const parsedFamily = savedFamily ? JSON.parse(savedFamily) : [];
     setData(parsedFamily);
     if (parsedFamily.length > 0) setRootId(parsedFamily[0].id);
     setEcoNodes(savedEco ? JSON.parse(savedEco) : []);
+    setExtraLinks(savedLinks ? JSON.parse(savedLinks) : []);
   }, []);
 
   useEffect(() => {
     if (!activeCaseId) return;
     localStorage.setItem(`masterpieceFamilyTree_${activeCaseId}`, JSON.stringify(data));
     localStorage.setItem(`masterpieceEcoMap_${activeCaseId}`, JSON.stringify(ecoNodes));
+    localStorage.setItem(`masterpieceLinks_${activeCaseId}`, JSON.stringify(extraLinks));
     if (data.length > 0 && !data.find(p => p.id === rootId)) setRootId(data[0].id);
-  }, [data, rootId, ecoNodes, activeCaseId]);
+  }, [data, rootId, ecoNodes, extraLinks, activeCaseId]);
 
   // --- Case (family tree) management ---
   const switchCase = (id) => {
     if (id === activeCaseId) return;
     const savedFamily = localStorage.getItem(`masterpieceFamilyTree_${id}`);
     const savedEco = localStorage.getItem(`masterpieceEcoMap_${id}`);
+    const savedLinks = localStorage.getItem(`masterpieceLinks_${id}`);
     const parsedFamily = savedFamily ? JSON.parse(savedFamily) : [];
     setActiveCaseId(id);
     setData(parsedFamily);
     setRootId(parsedFamily.length > 0 ? parsedFamily[0].id : '');
     setEcoNodes(savedEco ? JSON.parse(savedEco) : []);
+    setExtraLinks(savedLinks ? JSON.parse(savedLinks) : []);
     localStorage.setItem('masterpieceActiveCaseId', id);
     setCollapsedNodes(new Set());
     setSelectedProfile(null); setIsProfileOpen(false); setIsFormOpen(false);
     setPathFinder({ active: false, nodeA: null, nodeB: null, path: [] });
+    setLinkMode({ active: false, personA: null });
   };
 
   const handleAddCase = () => {
@@ -156,6 +173,7 @@ function App() {
     const newList = [...cases, { id, name }];
     localStorage.setItem(`masterpieceFamilyTree_${id}`, JSON.stringify([]));
     localStorage.setItem(`masterpieceEcoMap_${id}`, JSON.stringify([]));
+    localStorage.setItem(`masterpieceLinks_${id}`, JSON.stringify([]));
     localStorage.setItem('masterpieceCases', JSON.stringify(newList));
     setCases(newList);
     switchCase(id);
@@ -175,6 +193,7 @@ function App() {
     if (!window.confirm('ลบผังครอบครัวนี้ทั้งหมด? ข้อมูลจะหายและไม่สามารถกู้คืนได้')) return;
     localStorage.removeItem(`masterpieceFamilyTree_${activeCaseId}`);
     localStorage.removeItem(`masterpieceEcoMap_${activeCaseId}`);
+    localStorage.removeItem(`masterpieceLinks_${activeCaseId}`);
     const newList = cases.filter(c => c.id !== activeCaseId);
     localStorage.setItem('masterpieceCases', JSON.stringify(newList));
     setCases(newList);
@@ -240,15 +259,96 @@ function App() {
     }
   }, [pathFinder.nodeA, pathFinder.nodeB, data]);
 
+  // Measure where each linked person's card actually rendered so the overlay
+  // SVG (a child of .family-tree, so it inherits the same pan/zoom transform)
+  // can draw a line between them. transform:scale doesn't affect
+  // getBoundingClientRect's *relationship* to another element under the same
+  // transform, so (childRect - containerRect) / zoom recovers each card's
+  // true position in the tree's own untransformed coordinate space.
+  useEffect(() => {
+    if (viewMode !== 'genogram' || extraLinks.length === 0) { setLinkPositions([]); return; }
+    const calc = () => {
+      const container = treeContainerRef.current;
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+      const z = zoom || 1;
+      const positions = extraLinks.map(link => {
+        const elA = container.querySelector(`[data-person-id="${link.personA}"]`);
+        const elB = container.querySelector(`[data-person-id="${link.personB}"]`);
+        if (!elA || !elB) return null;
+        const rectA = elA.getBoundingClientRect();
+        const rectB = elB.getBoundingClientRect();
+        return {
+          ...link,
+          x1: (rectA.left + rectA.width / 2 - containerRect.left) / z,
+          y1: (rectA.top + rectA.height / 2 - containerRect.top) / z,
+          x2: (rectB.left + rectB.width / 2 - containerRect.left) / z,
+          y2: (rectB.top + rectB.height / 2 - containerRect.top) / z,
+        };
+      }).filter(Boolean);
+      setLinkPositions(positions);
+    };
+    const raf = requestAnimationFrame(calc);
+    window.addEventListener('resize', calc);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', calc); };
+  }, [data, collapsedNodes, extraLinks, rootId, viewMode, zoom]);
+
   // --- 4. Handlers ---
   const handleCardClick = (person) => {
     if (pathFinder.active) {
       if (!pathFinder.nodeA) setPathFinder(prev => ({ ...prev, nodeA: person.id }));
       else if (!pathFinder.nodeB && person.id !== pathFinder.nodeA) setPathFinder(prev => ({ ...prev, nodeB: person.id }));
       else setPathFinder(prev => ({ ...prev, nodeA: person.id, nodeB: null, path: [] }));
+    } else if (linkMode.active) {
+      if (!linkMode.personA) {
+        setLinkMode({ active: true, personA: person.id });
+      } else if (person.id !== linkMode.personA) {
+        setLinkFormData({ id: 'L' + Date.now(), personA: linkMode.personA, personB: person.id, style: 'close', label: '' });
+        setEditingLink(null);
+        setIsLinkFormOpen(true);
+        setLinkMode({ active: true, personA: null });
+      }
     } else {
       setSelectedProfile(person); setIsProfileOpen(true);
     }
+  };
+
+  const handleSaveLink = (e) => {
+    e.preventDefault();
+    if (editingLink) setExtraLinks(extraLinks.map(l => l.id === editingLink ? linkFormData : l));
+    else setExtraLinks([...extraLinks, linkFormData]);
+    setIsLinkFormOpen(false);
+    setEditingLink(null);
+  };
+
+  const openEditLink = (link) => {
+    setEditingLink(link.id);
+    setLinkFormData(link);
+    setIsLinkFormOpen(true);
+  };
+
+  const handleDeleteLink = () => {
+    if (!window.confirm('ลบเส้นความสัมพันธ์นี้?')) return;
+    setExtraLinks(extraLinks.filter(l => l.id !== editingLink));
+    setIsLinkFormOpen(false);
+    setEditingLink(null);
+  };
+
+  // A jagged "conflict" connector, matching how genograms conventionally
+  // draw a conflictual relationship.
+  const zigzagPath = (x1, y1, x2, y2, segments = 10, amplitude = 6) => {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    let d = `M ${x1} ${y1}`;
+    for (let i = 1; i < segments; i++) {
+      const t = i / segments;
+      const px = x1 + dx * t, py = y1 + dy * t;
+      const offset = i % 2 === 0 ? amplitude : -amplitude;
+      d += ` L ${px + nx * offset} ${py + ny * offset}`;
+    }
+    d += ` L ${x2} ${y2}`;
+    return d;
   };
 
   const openAddModal = (parentId = null, role = null) => {
@@ -298,6 +398,7 @@ function App() {
         if (newP.spouseId === id) newP.spouseId = null;
         return newP;
       }));
+      setExtraLinks(extraLinks.filter(l => l.personA !== id && l.personB !== id));
       setIsProfileOpen(false);
     }
   };
@@ -309,7 +410,7 @@ function App() {
   // --- 5. Export Systems (Full Set) ---
   const handleExportJSON = () => {
     const a = document.createElement('a');
-    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({family: data, ecomap: ecoNodes}, null, 2));
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({family: data, ecomap: ecoNodes, links: extraLinks}, null, 2));
     a.download = "masterpiece_backup.json"; a.click(); setIsExportMenuOpen(false);
   };
 
@@ -346,9 +447,11 @@ function App() {
         const importedData = JSON.parse(event.target.result);
         if (importedData.family && Array.isArray(importedData.family)) {
           setData(importedData.family); setRootId(importedData.family[0]?.id);
-          if(importedData.ecomap) setEcoNodes(importedData.ecomap);
+          setEcoNodes(importedData.ecomap || []);
+          setExtraLinks(importedData.links || []);
         } else if (Array.isArray(importedData)) {
           setData(importedData); setRootId(importedData[0]?.id);
+          setExtraLinks([]);
         }
       } catch (err) { alert("ไฟล์ JSON ไม่ถูกต้อง"); }
     };
@@ -414,6 +517,7 @@ function App() {
     const isStartNode = pathFinder.nodeA === person.id;
     const isEndNode = pathFinder.nodeB === person.id;
     const pathDimmed = pathFinder.active && pathFinder.nodeA && !isInPath && !isStartNode;
+    const isLinkNodeA = linkMode.active && linkMode.personA === person.id;
 
     // Clinical Shapes
     let shapeClass = "";
@@ -443,9 +547,11 @@ function App() {
     let cardEffects = '';
     if (isHighlighted) cardEffects += ' ring-4 ring-yellow-400 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-20';
     if (isInPath) cardEffects += ` ring-4 ring-emerald-400 rounded-xl shadow-[0_0_20px_rgba(52,211,153,0.6)] scale-105 z-20 ${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-50'}`;
+    if (isLinkNodeA) cardEffects += ' ring-4 ring-rose-400 rounded-xl shadow-[0_0_20px_rgba(251,113,133,0.6)] scale-105 z-20';
 
     return (
       <div
+        data-person-id={person.id}
         className={`no-drag group relative w-[130px] flex flex-col items-center transition-all duration-300 p-4 cursor-pointer
         ${cardEffects} ${pathDimmed ? 'opacity-20 grayscale scale-95' : 'hover:-translate-y-2'}`}
         onClick={() => handleCardClick(person)}
@@ -455,8 +561,9 @@ function App() {
         {person.twinType !== 'none' && <div className="absolute -top-3 right-[-10px] bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md z-10 no-print">{person.twinType === 'identical' ? 'แฝดแท้' : 'แฝดต่าง'}</div>}
         {isStartNode && <div className="absolute -top-4 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10">เริ่มต้น</div>}
         {isEndNode && <div className="absolute -top-4 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10">เป้าหมาย</div>}
+        {isLinkNodeA && <div className="absolute -top-4 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10 no-print">จุดที่ 1 — คลิกอีกคน</div>}
 
-        {!pathFinder.active && viewMode === 'genogram' && (
+        {!pathFinder.active && !linkMode.active && viewMode === 'genogram' && (
           <>
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover:flex bg-slate-800 text-white rounded-xl p-1 shadow-xl gap-1 z-50 no-print">
               <button onClick={(e) => { e.stopPropagation(); openEditModal(person); }} className="p-1.5 hover:bg-indigo-500 rounded-lg"><Edit2 className="w-4 h-4" /></button>
@@ -524,6 +631,39 @@ function App() {
           <ul>{node.children.map((childNode, index) => <TreeNode key={childNode.main.id + index} node={childNode} />)}</ul>
         )}
       </li>
+    );
+  };
+
+  // Extra relationship lines between two people who aren't a spouse pair
+  // (e.g. an uncle and a nephew on a different branch). Rendered as an SVG
+  // overlay sized to the tree's own natural box, so it inherits the same
+  // pan/zoom transform as the cards without any extra math.
+  const CrossLinksOverlay = () => {
+    if (linkPositions.length === 0) return null;
+    const styleMap = {
+      close: { stroke: isDarkMode ? '#34d399' : '#10b981', width: 3, dash: 'none' },
+      conflict: { stroke: '#ef4444', width: 2.5, dash: 'none' },
+      distant: { stroke: isDarkMode ? '#64748b' : '#94a3b8', width: 2, dash: '8,6' },
+    };
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: 'visible' }}>
+        {linkPositions.map(link => {
+          const s = styleMap[link.style] || styleMap.close;
+          const midX = (link.x1 + link.x2) / 2, midY = (link.y1 + link.y2) / 2;
+          const d = link.style === 'conflict' ? zigzagPath(link.x1, link.y1, link.x2, link.y2) : `M ${link.x1} ${link.y1} L ${link.x2} ${link.y2}`;
+          return (
+            <g key={link.id} className="no-drag" style={{ pointerEvents: 'auto', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); openEditLink(link); }}>
+              <path d={d} fill="none" stroke="transparent" strokeWidth={16} />
+              <path d={d} fill="none" stroke={s.stroke} strokeWidth={s.width} strokeDasharray={s.dash} strokeLinecap="round" />
+              {link.label && (
+                <foreignObject x={midX - 60} y={midY - 12} width="120" height="24">
+                  <div className={`text-[10px] font-bold text-center px-2 py-0.5 rounded-full shadow-sm truncate ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-white text-slate-700'}`} style={{ border: `1px solid ${s.stroke}` }}>{link.label}</div>
+                </foreignObject>
+              )}
+            </g>
+          );
+        })}
+      </svg>
     );
   };
 
@@ -754,13 +894,13 @@ function App() {
 
           {/* View Mode Switcher */}
           <div className={`flex bg-slate-200/50 p-1 rounded-2xl ${isDarkMode ? 'bg-slate-800/80' : 'bg-slate-200/50'}`}>
-             <button onClick={() => {setViewMode('genogram'); setPathFinder(p=>({...p, active:false}));}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'genogram' ? 'bg-white text-indigo-600 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+             <button onClick={() => {setViewMode('genogram'); setPathFinder(p=>({...p, active:false})); setLinkMode({active:false, personA:null});}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'genogram' ? 'bg-white text-indigo-600 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                <Users className="w-4 h-4" /> <span className="hidden md:inline">Genogram</span>
              </button>
-             <button onClick={() => {setViewMode('timeline'); setPathFinder(p=>({...p, active:false}));}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'timeline' ? 'bg-white text-amber-500 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+             <button onClick={() => {setViewMode('timeline'); setPathFinder(p=>({...p, active:false})); setLinkMode({active:false, personA:null});}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'timeline' ? 'bg-white text-amber-500 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                <CalendarClock className="w-4 h-4" /> <span className="hidden md:inline">Time Line</span>
              </button>
-             <button onClick={() => {setViewMode('ecomap'); setPathFinder(p=>({...p, active:false}));}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'ecomap' ? 'bg-white text-emerald-500 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+             <button onClick={() => {setViewMode('ecomap'); setPathFinder(p=>({...p, active:false})); setLinkMode({active:false, personA:null});}} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'ecomap' ? 'bg-white text-emerald-500 shadow-sm' : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                <Network className="w-4 h-4" /> <span className="hidden md:inline">Eco-Map</span>
              </button>
           </div>
@@ -777,8 +917,14 @@ function App() {
                   <UserPlus className="w-5 h-5" />
                 </button>
                 <button onClick={() => setPathFinder(p => ({ active: !p.active, nodeA: null, nodeB: null, path: [] }))}
+                  title="หาเส้นทางความเกี่ยวข้อง"
                   className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${pathFinder.active ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]' : (isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')}`}>
                   <Route className="w-5 h-5" />
+                </button>
+                <button onClick={() => setLinkMode(m => ({ active: !m.active, personA: null }))}
+                  title="เชื่อมเส้นความสัมพันธ์ข้ามสาย (เช่น ญาติที่ไม่ได้อยู่กิ่งเดียวกัน)"
+                  className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${linkMode.active ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)]' : (isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')}`}>
+                  <Link2 className="w-5 h-5" />
                 </button>
                 <div className={`flex items-center gap-1 rounded-2xl px-1 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(2)))} title="ซูมออก"
@@ -834,6 +980,7 @@ function App() {
           {viewMode === 'genogram' && (
             <div ref={treeContainerRef} className="family-tree transition-transform duration-200 origin-center absolute p-10" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, marginTop: '-10vh' }}>
               {treeData ? <ul><TreeNode node={treeData} /></ul> : null}
+              <CrossLinksOverlay />
             </div>
           )}
           {viewMode === 'ecomap' && <EcoMapView />}
@@ -986,6 +1133,39 @@ function App() {
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsFormOpen(false)} className={`flex-1 p-3 rounded-xl font-bold transition-colors ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>ยกเลิก</button>
                 <button type="submit" className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-colors">บันทึกข้อมูล</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cross-tree Relationship Link Modal (Add/Edit) */}
+      {isLinkFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4 no-print">
+          <div className={`rounded-3xl shadow-2xl w-full max-w-sm p-6 relative border ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+            <h2 className="text-xl font-bold flex items-center gap-2 mb-2 text-rose-500"><Link2 className="w-5 h-5" /> {editingLink ? 'แก้ไขเส้นความสัมพันธ์' : 'เพิ่มเส้นความสัมพันธ์'}</h2>
+            <p className={`text-sm mb-6 ${theme.textMuted}`}>
+              {data.find(p => p.id === linkFormData.personA)?.firstName || '-'} ⟷ {data.find(p => p.id === linkFormData.personB)?.firstName || '-'}
+            </p>
+            <form onSubmit={handleSaveLink} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold opacity-70">ประเภทความสัมพันธ์</label>
+                <select className={`w-full p-3 mt-1 rounded-xl outline-none border ${isDarkMode?'bg-slate-800 border-slate-700':'bg-slate-50 border-slate-200'}`}
+                  value={linkFormData.style} onChange={e => setLinkFormData({...linkFormData, style: e.target.value})}>
+                  <option value="close">สนิท / ให้การสนับสนุน (เส้นเขียว)</option>
+                  <option value="conflict">ขัดแย้ง (เส้นหยักแดง)</option>
+                  <option value="distant">ห่างเหิน (เส้นประ)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold opacity-70">หมายเหตุ (ถ้ามี)</label>
+                <input type="text" placeholder="เช่น ดูแลกันประจำ" className={`w-full p-3 mt-1 rounded-xl outline-none border ${isDarkMode?'bg-slate-800 border-slate-700':'bg-slate-50 border-slate-200'}`}
+                  value={linkFormData.label} onChange={e => setLinkFormData({...linkFormData, label: e.target.value})} />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => { setIsLinkFormOpen(false); setEditingLink(null); }} className={`flex-1 p-3 rounded-xl font-bold ${isDarkMode?'bg-slate-800':'bg-slate-100'}`}>ยกเลิก</button>
+                {editingLink && <button type="button" onClick={handleDeleteLink} className="p-3 px-4 bg-rose-500/10 text-rose-500 rounded-xl font-bold"><Trash2 className="w-4 h-4" /></button>}
+                <button type="submit" className="flex-1 p-3 bg-rose-500 text-white rounded-xl font-bold shadow-lg">บันทึก</button>
               </div>
             </form>
           </div>

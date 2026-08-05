@@ -523,7 +523,7 @@ function App() {
   const TimelineView = () => {
     const peopleWithEvents = data.filter(p => p.timeline && p.timeline.length > 0);
     return (
-      <div className="w-full h-[75vh] p-4 overflow-auto">
+      <div className="family-timeline-scroll w-full h-[75vh] p-4 overflow-auto">
         <div className={`max-w-5xl mx-auto rounded-3xl shadow-xl p-8 border ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
           <div className="flex items-center gap-3 mb-8 border-b border-slate-200/50 pb-4">
             <div className="p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl shadow-lg"><CalendarClock className="w-6 h-6" /></div>
@@ -561,7 +561,7 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen ${theme.bg} font-sans flex flex-col h-screen overflow-hidden transition-colors duration-500`}>
+    <div className={`family-tree-root min-h-screen ${theme.bg} font-sans flex flex-col h-screen overflow-hidden transition-colors duration-500`}>
 
       {/* CSS FOR TREE & PRINT */}
       <style>{`
@@ -577,10 +577,13 @@ function App() {
         .family-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid ${theme.lineColor}; width: 0; height: 40px; transform: translateX(-50%); }
 
         @media print {
-          body, html { background: white !important; color: black !important; }
+          body, html { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
           .no-print { display: none !important; }
-          .family-tree-wrapper { position: absolute !important; top: 0 !important; left: 0 !important; transform: scale(0.75) !important; transform-origin: top center !important;}
-          .family-tree-container { margin-top: 0 !important; transform: none !important; }
+          .family-tree-root { height: auto !important; min-height: 0 !important; overflow: visible !important; }
+          .family-tree-wrapper { position: static !important; overflow: visible !important; height: auto !important; background-image: none !important; }
+          .family-tree-container { position: static !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; }
+          .family-tree { position: static !important; transform: none !important; margin: 20px auto !important; }
+          .family-timeline-scroll { height: auto !important; overflow: visible !important; }
         }
       `}</style>
 
@@ -634,6 +637,21 @@ function App() {
                   className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${pathFinder.active ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]' : (isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')}`}>
                   <Route className="w-5 h-5" />
                 </button>
+                <div className={`flex items-center gap-1 rounded-2xl px-1 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  <button onClick={() => setZoom(z => Math.max(0.3, +(z - 0.1).toFixed(2)))} title="ซูมออก"
+                    className={`flex items-center justify-center w-8 h-10 rounded-xl transition-all ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className={`text-xs font-bold w-9 text-center select-none ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{Math.round(zoom * 100)}%</span>
+                  <button onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(2)))} title="ซูมเข้า"
+                    className={`flex items-center justify-center w-8 h-10 rounded-xl transition-all ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="รีเซ็ตมุมมอง"
+                    className={`flex items-center justify-center w-8 h-10 rounded-xl transition-all ${isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}>
+                    <Maximize className="w-4 h-4" />
+                  </button>
+                </div>
               </>
             )}
             <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-10 h-10 flex items-center justify-center rounded-2xl transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-100 text-indigo-500'}`}>

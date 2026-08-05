@@ -508,7 +508,8 @@ function App() {
         </svg>
 
         <div className="absolute z-20 transform -translate-x-1/2 -translate-y-1/2" style={{ left: '50%', top: '50%' }}>
-          <div className={`p-6 rounded-full border-4 border-double border-indigo-500 shadow-2xl flex flex-col items-center justify-center ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+          <div onClick={() => openEditModal(centerPatient)} title="คลิกเพื่อแก้ไขข้อมูล"
+            className={`p-6 rounded-full border-4 border-double border-indigo-500 shadow-2xl flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-105 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
             <div className="text-5xl mb-2">{getAvatarEmoji(centerPatient.gender, centerPatient.birthDate, centerPatient.nodeType)}</div>
             <p className="font-bold text-lg text-indigo-600 text-center whitespace-nowrap">{centerPatient.firstName} {centerPatient.lastName}</p>
             <p className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full mt-1 font-bold">ครอบครัว / ผู้ป่วยหลัก</p>
@@ -551,19 +552,37 @@ function App() {
   // --- 11. Timeline Component ---
   const TimelineView = () => {
     const peopleWithEvents = data.filter(p => p.timeline && p.timeline.length > 0);
+    const [addEventFor, setAddEventFor] = useState('');
     return (
       <div className="family-timeline-scroll w-full h-[75vh] p-4 overflow-auto">
         <div className={`max-w-5xl mx-auto rounded-3xl shadow-xl p-8 border ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <div className="flex items-center gap-3 mb-8 border-b border-slate-200/50 pb-4">
-            <div className="p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl shadow-lg"><CalendarClock className="w-6 h-6" /></div>
-            <div><h2 className={`text-2xl font-bold ${theme.text}`}>แผนผังเวลา (Time Line)</h2><p className={`text-sm ${theme.textMuted}`}>ลำดับเหตุการณ์สำคัญในครอบครัว</p></div>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 border-b border-slate-200/50 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl shadow-lg"><CalendarClock className="w-6 h-6" /></div>
+              <div><h2 className={`text-2xl font-bold ${theme.text}`}>แผนผังเวลา (Time Line)</h2><p className={`text-sm ${theme.textMuted}`}>ลำดับเหตุการณ์สำคัญในครอบครัว</p></div>
+            </div>
+            <div className="flex items-center gap-2 no-print">
+              <select value={addEventFor} onChange={e => setAddEventFor(e.target.value)}
+                className={`p-2.5 rounded-xl border text-sm outline-none ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'}`}>
+                <option value="">เลือกบุคคลเพื่อเพิ่ม/แก้ไขเหตุการณ์...</option>
+                {data.filter(p => p.nodeType === 'person').map(p => <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}
+              </select>
+              <button onClick={() => { const p = data.find(p => p.id === addEventFor); if (p) openEditModal(p); }} disabled={!addEventFor}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 disabled:opacity-40 text-white rounded-xl text-sm font-bold shadow-md hover:bg-indigo-500">
+                <Edit2 className="w-4 h-4" /> แก้ไข
+              </button>
+            </div>
           </div>
           {peopleWithEvents.length === 0 ? (
-            <div className="text-center py-20 opacity-50"><Activity className="w-16 h-16 mx-auto mb-4" /><p>ยังไม่มีการบันทึกประวัติ (สามารถเพิ่มได้ในโหมดแก้ไขบุคคล)</p></div>
+            <div className="text-center py-20 opacity-50"><Activity className="w-16 h-16 mx-auto mb-4" /><p>ยังไม่มีการบันทึกประวัติ เลือกบุคคลด้านบนเพื่อเพิ่มเหตุการณ์แรก</p></div>
           ) : (
             <div className="space-y-6">
               {peopleWithEvents.map(person => (
-                <div key={person.id} className={`p-5 rounded-2xl shadow-sm border flex flex-col md:flex-row gap-6 items-center md:items-start ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                <div key={person.id} className={`relative p-5 rounded-2xl shadow-sm border flex flex-col md:flex-row gap-6 items-center md:items-start ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                  <button onClick={() => openEditModal(person)} title="แก้ไขเหตุการณ์ของบุคคลนี้"
+                    className={`no-print absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-200'}`}>
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                   <div className="w-32 shrink-0 text-center">
                     <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-4xl mb-2 ${isDarkMode ? 'bg-slate-900' : 'bg-white shadow-sm'}`}>{getAvatarEmoji(person.gender, person.birthDate, person.nodeType)}</div>
                     <p className={`font-bold text-sm ${theme.text}`}>{person.firstName}</p>

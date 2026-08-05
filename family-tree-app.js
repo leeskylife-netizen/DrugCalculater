@@ -113,6 +113,35 @@ function App() {
     localStorage.setItem('masterpieceEcoMap', JSON.stringify(ecoNodes));
   }, [data, rootId, ecoNodes]);
 
+  // Fit the tree to the printed page width. transform:scale doesn't affect
+  // scrollWidth/Height, so this reads the tree's true unscaled size
+  // regardless of the on-screen zoom/pan, and applies a print-only scale
+  // directly to the DOM (bypassing React's render cycle) so it's guaranteed
+  // to be in place before the browser captures the print output.
+  useEffect(() => {
+    const PRINT_TARGET_WIDTH = 1000;
+    const handleBeforePrint = () => {
+      const el = treeContainerRef.current;
+      if (!el) return;
+      const naturalWidth = el.scrollWidth;
+      const scale = Math.min(1, PRINT_TARGET_WIDTH / naturalWidth);
+      el.style.transform = `scale(${scale})`;
+      el.style.marginTop = '0';
+    };
+    const handleAfterPrint = () => {
+      const el = treeContainerRef.current;
+      if (!el) return;
+      el.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+      el.style.marginTop = '-10vh';
+    };
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, [pan, zoom]);
+
   useEffect(() => {
     if (pathFinder.nodeA && pathFinder.nodeB) {
       const graph = {};
@@ -566,7 +595,7 @@ function App() {
       {/* CSS FOR TREE & PRINT */}
       <style>{`
         .family-tree ul { padding-top: 40px; position: relative; display: flex; justify-content: center; padding-left: 0; margin: 0; }
-        .family-tree li { text-align: center; list-style-type: none; position: relative; padding: 40px 10px 0 10px; }
+        .family-tree li { text-align: center; list-style-type: none; position: relative; padding: 40px 28px 0 28px; }
         .family-tree li::before, .family-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid ${theme.lineColor}; width: 50%; height: 40px; }
         .family-tree li::after { right: auto; left: 50%; border-left: 2px solid ${theme.lineColor}; }
         .family-tree li:only-child::after, .family-tree li:only-child::before { display: none; }
@@ -576,13 +605,14 @@ function App() {
         .family-tree li:first-child::after { border-radius: 0; }
         .family-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid ${theme.lineColor}; width: 0; height: 40px; transform: translateX(-50%); }
 
+        @page { size: landscape; margin: 10mm; }
         @media print {
           body, html { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
           .no-print { display: none !important; }
           .family-tree-root { height: auto !important; min-height: 0 !important; overflow: visible !important; }
           .family-tree-wrapper { position: static !important; overflow: visible !important; height: auto !important; background-image: none !important; }
           .family-tree-container { position: static !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; }
-          .family-tree { position: static !important; transform: none !important; margin: 20px auto !important; }
+          .family-tree { position: static !important; margin: 20px auto !important; transform-origin: top center !important; }
           .family-timeline-scroll { height: auto !important; overflow: visible !important; }
         }
       `}</style>

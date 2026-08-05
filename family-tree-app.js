@@ -61,6 +61,12 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [viewMode, setViewMode] = useState('genogram');
 
+  // Multiple family trees ("cases"): each case's data/eco-map is stored under
+  // its own localStorage key, with a small index (masterpieceCases) listing
+  // {id, name} for all of them.
+  const [cases, setCases] = useState([]);
+  const [activeCaseId, setActiveCaseId] = useState('');
+
   // Interactions
   const [pathFinder, setPathFinder] = useState({ active: false, nodeA: null, nodeB: null, path: [] });
   const [zoom, setZoom] = useState(1);
@@ -92,26 +98,88 @@ function App() {
 
   // --- 3. Effects ---
   useEffect(() => {
-    const savedData = localStorage.getItem('masterpieceFamilyTree');
-    const savedEcoData = localStorage.getItem('masterpieceEcoMap');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setData(parsedData);
-      if (parsedData.length > 0) setRootId(parsedData[0].id);
+    const savedCases = localStorage.getItem('masterpieceCases');
+    let caseList, activeId;
+    if (savedCases) {
+      caseList = JSON.parse(savedCases);
+      activeId = localStorage.getItem('masterpieceActiveCaseId') || caseList[0]?.id;
     } else {
-      setData(initialData); setRootId(initialData[0].id);
+      // First run on this browser, or upgrading from the single-tree version:
+      // wrap whatever was already saved (or the demo data, for a brand new
+      // install) into "ผังที่ 1" instead of losing it.
+      const legacyData = localStorage.getItem('masterpieceFamilyTree');
+      const legacyEco = localStorage.getItem('masterpieceEcoMap');
+      activeId = 'case-1';
+      caseList = [{ id: activeId, name: 'ผังที่ 1' }];
+      localStorage.setItem(`masterpieceFamilyTree_${activeId}`, legacyData || JSON.stringify(initialData));
+      localStorage.setItem(`masterpieceEcoMap_${activeId}`, legacyEco || JSON.stringify(initialEcoNodes));
+      localStorage.setItem('masterpieceCases', JSON.stringify(caseList));
+      localStorage.setItem('masterpieceActiveCaseId', activeId);
     }
-    if (savedEcoData) setEcoNodes(JSON.parse(savedEcoData));
-    else setEcoNodes(initialEcoNodes);
+    setCases(caseList);
+    setActiveCaseId(activeId);
+    const savedFamily = localStorage.getItem(`masterpieceFamilyTree_${activeId}`);
+    const savedEco = localStorage.getItem(`masterpieceEcoMap_${activeId}`);
+    const parsedFamily = savedFamily ? JSON.parse(savedFamily) : [];
+    setData(parsedFamily);
+    if (parsedFamily.length > 0) setRootId(parsedFamily[0].id);
+    setEcoNodes(savedEco ? JSON.parse(savedEco) : []);
   }, []);
 
   useEffect(() => {
-    if (data.length > 0) {
-      localStorage.setItem('masterpieceFamilyTree', JSON.stringify(data));
-      if (!data.find(p => p.id === rootId)) setRootId(data[0].id);
-    }
-    localStorage.setItem('masterpieceEcoMap', JSON.stringify(ecoNodes));
-  }, [data, rootId, ecoNodes]);
+    if (!activeCaseId) return;
+    localStorage.setItem(`masterpieceFamilyTree_${activeCaseId}`, JSON.stringify(data));
+    localStorage.setItem(`masterpieceEcoMap_${activeCaseId}`, JSON.stringify(ecoNodes));
+    if (data.length > 0 && !data.find(p => p.id === rootId)) setRootId(data[0].id);
+  }, [data, rootId, ecoNodes, activeCaseId]);
+
+  // --- Case (family tree) management ---
+  const switchCase = (id) => {
+    if (id === activeCaseId) return;
+    const savedFamily = localStorage.getItem(`masterpieceFamilyTree_${id}`);
+    const savedEco = localStorage.getItem(`masterpieceEcoMap_${id}`);
+    const parsedFamily = savedFamily ? JSON.parse(savedFamily) : [];
+    setActiveCaseId(id);
+    setData(parsedFamily);
+    setRootId(parsedFamily.length > 0 ? parsedFamily[0].id : '');
+    setEcoNodes(savedEco ? JSON.parse(savedEco) : []);
+    localStorage.setItem('masterpieceActiveCaseId', id);
+    setCollapsedNodes(new Set());
+    setSelectedProfile(null); setIsProfileOpen(false); setIsFormOpen(false);
+    setPathFinder({ active: false, nodeA: null, nodeB: null, path: [] });
+  };
+
+  const handleAddCase = () => {
+    const name = window.prompt('ชื่อผังครอบครัวใหม่', `ผังที่ ${cases.length + 1}`);
+    if (!name) return;
+    const id = 'case-' + Date.now();
+    const newList = [...cases, { id, name }];
+    localStorage.setItem(`masterpieceFamilyTree_${id}`, JSON.stringify([]));
+    localStorage.setItem(`masterpieceEcoMap_${id}`, JSON.stringify([]));
+    localStorage.setItem('masterpieceCases', JSON.stringify(newList));
+    setCases(newList);
+    switchCase(id);
+  };
+
+  const handleRenameCase = () => {
+    const current = cases.find(c => c.id === activeCaseId);
+    const name = window.prompt('เปลี่ยนชื่อผังครอบครัว', current?.name || '');
+    if (!name) return;
+    const newList = cases.map(c => c.id === activeCaseId ? { ...c, name } : c);
+    setCases(newList);
+    localStorage.setItem('masterpieceCases', JSON.stringify(newList));
+  };
+
+  const handleDeleteCase = () => {
+    if (cases.length <= 1) { alert('ต้องมีผังครอบครัวอย่างน้อย 1 ผัง'); return; }
+    if (!window.confirm('ลบผังครอบครัวนี้ทั้งหมด? ข้อมูลจะหายและไม่สามารถกู้คืนได้')) return;
+    localStorage.removeItem(`masterpieceFamilyTree_${activeCaseId}`);
+    localStorage.removeItem(`masterpieceEcoMap_${activeCaseId}`);
+    const newList = cases.filter(c => c.id !== activeCaseId);
+    localStorage.setItem('masterpieceCases', JSON.stringify(newList));
+    setCases(newList);
+    switchCase(newList[0].id);
+  };
 
   // Fit the tree to the printed page width. transform:scale doesn't affect
   // scrollWidth/Height, so this reads the tree's true unscaled size
@@ -656,6 +724,26 @@ function App() {
               <h1 className={`text-xl font-extrabold tracking-tight hidden sm:block leading-tight ${theme.text}`}>Family<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-500">Tree</span></h1>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Masterpiece Edition</p>
             </div>
+          </div>
+
+          {/* Case (family tree) switcher */}
+          <div className="flex items-center gap-1.5">
+            <select value={activeCaseId} onChange={(e) => switchCase(e.target.value)} title="เลือกผังครอบครัว"
+              className={`text-sm font-bold rounded-2xl px-3 py-2 outline-none border max-w-[140px] truncate ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+              {cases.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button onClick={handleAddCase} title="เพิ่มผังครอบครัวใหม่"
+              className={`p-2 rounded-2xl transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}>
+              <Plus className="w-4 h-4" />
+            </button>
+            <button onClick={handleRenameCase} title="เปลี่ยนชื่อผังครอบครัว"
+              className={`p-2 rounded-2xl transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}>
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button onClick={handleDeleteCase} title="ลบผังครอบครัวนี้"
+              className={`p-2 rounded-2xl transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'}`}>
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
 
           {/* View Mode Switcher */}

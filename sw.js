@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v12'; // v12: เปลี่ยนฟอนต์เป็น Sarabun (self-hosted, ออฟไลน์ได้)
+const CACHE_NAME = 'ncd-app-cache-v13'; // v13: รองรับหลายผังครอบครัว (case switcher)
 const ASSETS = [
   './',
   './index.html',

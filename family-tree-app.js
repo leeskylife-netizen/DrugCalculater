@@ -187,7 +187,11 @@ function App() {
   // directly to the DOM (bypassing React's render cycle) so it's guaranteed
   // to be in place before the browser captures the print output.
   useEffect(() => {
-    const PRINT_TARGET_WIDTH = 1000;
+    // Matches the @page rule below: landscape A4 (297mm) minus its 10mm
+    // margins on each side = 277mm usable ≈ 1047px at 96dpi. Kept slightly
+    // under that as a safety margin for rounding differences across
+    // browsers/printers.
+    const PRINT_TARGET_WIDTH = 1030;
     const handleBeforePrint = () => {
       const el = treeContainerRef.current;
       if (!el) return;

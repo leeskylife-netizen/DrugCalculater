@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ncd-app-cache-v10'; // อัปเกรดเวอร์ชันแคช PWA สำหรับดีไซน์พรีเมียมสไตล์ iOS เวอร์ชันปรับปรุงละเอียด (v10)
+const CACHE_NAME = 'ncd-app-cache-v11'; // v11: เพิ่มหน้า Family Tree / Genogram (ทำงานออฟไลน์ได้ ไม่พึ่ง CDN)
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,9 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './family-tree.html',
+  './family-tree.bundle.js',
+  './family-tree.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
